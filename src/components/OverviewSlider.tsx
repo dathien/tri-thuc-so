@@ -274,7 +274,7 @@ export const OverviewSlider: React.FC<OverviewSliderProps> = ({ onNavigate }) =>
 
           {/* Right Preview Card / Math Badge (4 cols) */}
           <div className="lg:col-span-4 hidden lg:flex flex-col items-center justify-center">
-            <div className="w-full max-w-xs bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 text-center shadow-inner space-y-3">
+            <div className="w-full max-w-sm bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 text-center shadow-inner space-y-3">
               <div className="w-14 h-14 mx-auto rounded-2xl bg-white/20 flex items-center justify-center shadow-lg border border-white/30">
                 <IconComponent className="w-7 h-7 text-amber-300" />
               </div>
@@ -289,8 +289,10 @@ export const OverviewSlider: React.FC<OverviewSliderProps> = ({ onNavigate }) =>
               </div>
 
               {activeSlide.mathFormula && (
-                <div className="bg-black/30 rounded-xl p-2.5 border border-white/10 text-xs text-amber-200 overflow-x-auto whitespace-nowrap flex items-center justify-center">
-                  <MathRenderer content={activeSlide.mathFormula} inline />
+                <div className="slider-math-box bg-black/30 rounded-xl p-3 border border-white/10 text-xs text-amber-200 flex flex-col items-center justify-center text-center break-words max-w-full">
+                  <div className="w-full flex items-center justify-center flex-wrap leading-relaxed">
+                    <MathRenderer content={activeSlide.mathFormula} inline />
+                  </div>
                 </div>
               )}
 

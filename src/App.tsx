@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import Sidebar, { SectionKey } from './components/Sidebar';
 import Footer from './components/Footer';
@@ -39,6 +39,7 @@ import {
   Student,
   Question,
   Exam,
+  ExamMatrix,
   ExamSubmission,
   NotificationItem,
   ActivityLog,
@@ -52,15 +53,46 @@ export default function App() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
 
-  // Core Data States
+  // Core Data States with localStorage persistence
   const [classes, setClasses] = useState<ClassRoom[]>(INITIAL_CLASSES);
   const [students, setStudents] = useState<Student[]>(INITIAL_STUDENTS);
-  const [questions, setQuestions] = useState<Question[]>(INITIAL_QUESTIONS);
-  const [matrices, setMatrices] = useState(INITIAL_MATRICES);
+  const [questions, setQuestions] = useState<Question[]>(() => {
+    try {
+      const saved = localStorage.getItem('edutest_smart_questions');
+      return saved ? JSON.parse(saved) : INITIAL_QUESTIONS;
+    } catch {
+      return INITIAL_QUESTIONS;
+    }
+  });
+  const [matrices, setMatrices] = useState<ExamMatrix[]>(() => {
+    try {
+      const saved = localStorage.getItem('edutest_smart_matrices');
+      return saved ? JSON.parse(saved) : INITIAL_MATRICES;
+    } catch {
+      return INITIAL_MATRICES;
+    }
+  });
   const [exams, setExams] = useState<Exam[]>(INITIAL_EXAMS);
   const [submissions, setSubmissions] = useState<ExamSubmission[]>(INITIAL_SUBMISSIONS);
   const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
   const [activities, setActivities] = useState<ActivityLog[]>(INITIAL_ACTIVITY_LOGS);
+
+  // Sync questions and matrices to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('edutest_smart_questions', JSON.stringify(questions));
+    } catch (e) {
+      console.warn('Cannot save questions to localStorage', e);
+    }
+  }, [questions]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('edutest_smart_matrices', JSON.stringify(matrices));
+    } catch (e) {
+      console.warn('Cannot save matrices to localStorage', e);
+    }
+  }, [matrices]);
 
   // Switch role between teacher and student
   const handleSwitchRole = (newRole: 'teacher' | 'student') => {
@@ -146,6 +178,14 @@ export default function App() {
 
   const handleDeleteQuestion = (id: string) => {
     setQuestions((prev) => prev.filter((q) => q.id !== id));
+  };
+
+  const handleUpdateQuestion = (updatedQ: Question) => {
+    setQuestions((prev) => prev.map((q) => (q.id === updatedQ.id ? updatedQ : q)));
+  };
+
+  const handleUpdateMatrix = (updatedMatrix: ExamMatrix) => {
+    setMatrices((prev) => prev.map((m) => (m.id === updatedMatrix.id ? updatedMatrix : m)));
   };
 
   const handleSaveExam = (newExam: Omit<Exam, 'id' | 'createdAt'>) => {
@@ -271,6 +311,7 @@ export default function App() {
             <QuestionsView
               questions={questions}
               onAddQuestion={handleAddQuestion}
+              onUpdateQuestion={handleUpdateQuestion}
               onDeleteQuestion={handleDeleteQuestion}
             />
           )}
@@ -278,6 +319,7 @@ export default function App() {
           {currentSection === 'matrix' && (
             <MatrixView
               matrices={matrices}
+              onUpdateMatrix={handleUpdateMatrix}
               onNavigate={(sec) => setCurrentSection(sec)}
             />
           )}

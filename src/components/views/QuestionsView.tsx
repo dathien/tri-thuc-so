@@ -11,6 +11,8 @@ import {
   FileCode,
   Tag,
   Trash2,
+  Sparkles,
+  Layers,
 } from 'lucide-react';
 import { Question, CognitiveLevel, QuestionType } from '../../types';
 import MathRenderer from '../MathRenderer';
@@ -19,14 +21,15 @@ import { soundService } from '../../utils/audio';
 interface QuestionsViewProps {
   questions: Question[];
   onAddQuestion: (q: Omit<Question, 'id' | 'createdAt'>) => void;
+  onUpdateQuestion?: (q: Question) => void;
   onDeleteQuestion: (id: string) => void;
 }
 
-const COGNITIVE_LEVEL_LABELS: Record<CognitiveLevel, { label: string; color: string }> = {
-  recognition: { label: 'Nhận biết', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  comprehension: { label: 'Thông hiểu', color: 'bg-blue-50 text-blue-700 border-blue-200' },
-  application: { label: 'Vận dụng', color: 'bg-amber-50 text-amber-700 border-amber-200' },
-  high_application: { label: 'Vận dụng cao', color: 'bg-rose-50 text-rose-700 border-rose-200' },
+const COGNITIVE_LEVEL_LABELS: Record<CognitiveLevel, { label: string; color: string; border: string }> = {
+  recognition: { label: 'Nhận biết', color: 'bg-emerald-50 text-emerald-700', border: 'border-emerald-200' },
+  comprehension: { label: 'Thông hiểu', color: 'bg-blue-50 text-blue-700', border: 'border-blue-200' },
+  application: { label: 'Vận dụng', color: 'bg-amber-50 text-amber-700', border: 'border-amber-200' },
+  high_application: { label: 'Vận dụng cao', color: 'bg-rose-50 text-rose-700', border: 'border-rose-200' },
 };
 
 const QUESTION_TYPE_LABELS: Record<QuestionType, string> = {
@@ -39,6 +42,7 @@ const QUESTION_TYPE_LABELS: Record<QuestionType, string> = {
 export const QuestionsView: React.FC<QuestionsViewProps> = ({
   questions,
   onAddQuestion,
+  onUpdateQuestion,
   onDeleteQuestion,
 }) => {
   const [selectedGrade, setSelectedGrade] = useState<'all' | 10 | 11 | 12>('all');
@@ -62,6 +66,13 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
   const [newOptionD, setNewOptionD] = useState('');
   const [newCorrectAnswer, setNewCorrectAnswer] = useState('A');
   const [newExplanation, setNewExplanation] = useState('');
+
+  // 4 Cognitive Level Statistics
+  const totalCount = questions.length || 1;
+  const recCount = questions.filter((q) => q.cognitiveLevel === 'recognition').length;
+  const compCount = questions.filter((q) => q.cognitiveLevel === 'comprehension').length;
+  const appCount = questions.filter((q) => q.cognitiveLevel === 'application').length;
+  const highCount = questions.filter((q) => q.cognitiveLevel === 'high_application').length;
 
   const filteredQuestions = questions.filter((q) => {
     const matchGrade = selectedGrade === 'all' ? true : q.grade === selectedGrade;
@@ -104,6 +115,13 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
     soundService.playSuccess();
   };
 
+  const handleQuickChangeLevel = (question: Question, newLvl: CognitiveLevel) => {
+    soundService.playClick();
+    if (onUpdateQuestion) {
+      onUpdateQuestion({ ...question, cognitiveLevel: newLvl });
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header Bar */}
@@ -118,7 +136,7 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Tổ chức theo ma trận GDPT 2018: Lớp 10–12, 4 mức độ nhận thức, hỗ trợ công thức KaTeX.
+            Tổ chức theo ma trận GDPT 2018: Lớp 10–12, 4 mức độ nhận thức (có thể gán và điều chỉnh trực tiếp), hỗ trợ công thức KaTeX.
           </p>
         </div>
 
@@ -132,6 +150,121 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
             Soạn câu hỏi mới
           </button>
         </div>
+      </div>
+
+      {/* 4 Cognitive Levels Summary Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedLevel(selectedLevel === 'recognition' ? 'all' : 'recognition');
+            soundService.playClick();
+          }}
+          className={`p-3.5 rounded-2xl border text-left transition-all ${
+            selectedLevel === 'recognition'
+              ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+              : 'bg-white hover:bg-emerald-50/50 border-emerald-200/80 text-emerald-950'
+          }`}
+        >
+          <div className="flex items-center justify-between mb-1">
+            <span className="font-bold text-[11px] uppercase tracking-wider">Nhận biết</span>
+            <span
+              className={`text-[10px] font-mono px-1.5 py-0.2 rounded font-bold ${
+                selectedLevel === 'recognition' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-800'
+              }`}
+            >
+              {((recCount / totalCount) * 100).toFixed(0)}%
+            </span>
+          </div>
+          <p className="text-xl font-extrabold font-mono">{recCount} câu</p>
+          <p className={`text-[10px] mt-0.5 ${selectedLevel === 'recognition' ? 'text-emerald-100' : 'text-slate-500'}`}>
+            Định nghĩa, khái niệm cơ bản
+          </p>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedLevel(selectedLevel === 'comprehension' ? 'all' : 'comprehension');
+            soundService.playClick();
+          }}
+          className={`p-3.5 rounded-2xl border text-left transition-all ${
+            selectedLevel === 'comprehension'
+              ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+              : 'bg-white hover:bg-blue-50/50 border-blue-200/80 text-blue-950'
+          }`}
+        >
+          <div className="flex items-center justify-between mb-1">
+            <span className="font-bold text-[11px] uppercase tracking-wider">Thông hiểu</span>
+            <span
+              className={`text-[10px] font-mono px-1.5 py-0.2 rounded font-bold ${
+                selectedLevel === 'comprehension' ? 'bg-white/20 text-white' : 'bg-blue-100 text-blue-800'
+              }`}
+            >
+              {((compCount / totalCount) * 100).toFixed(0)}%
+            </span>
+          </div>
+          <p className="text-xl font-extrabold font-mono">{compCount} câu</p>
+          <p className={`text-[10px] mt-0.5 ${selectedLevel === 'comprehension' ? 'text-blue-100' : 'text-slate-500'}`}>
+            Áp dụng trực tiếp công thức
+          </p>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedLevel(selectedLevel === 'application' ? 'all' : 'application');
+            soundService.playClick();
+          }}
+          className={`p-3.5 rounded-2xl border text-left transition-all ${
+            selectedLevel === 'application'
+              ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
+              : 'bg-white hover:bg-amber-50/50 border-amber-200/80 text-amber-950'
+          }`}
+        >
+          <div className="flex items-center justify-between mb-1">
+            <span className="font-bold text-[11px] uppercase tracking-wider">Vận dụng</span>
+            <span
+              className={`text-[10px] font-mono px-1.5 py-0.2 rounded font-bold ${
+                selectedLevel === 'application' ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-800'
+              }`}
+            >
+              {((appCount / totalCount) * 100).toFixed(0)}%
+            </span>
+          </div>
+          <p className="text-xl font-extrabold font-mono">{appCount} câu</p>
+          <p className={`text-[10px] mt-0.5 ${selectedLevel === 'application' ? 'text-amber-100' : 'text-slate-500'}`}>
+            Phối hợp nhiều bước toán học
+          </p>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedLevel(selectedLevel === 'high_application' ? 'all' : 'high_application');
+            soundService.playClick();
+          }}
+          className={`p-3.5 rounded-2xl border text-left transition-all ${
+            selectedLevel === 'high_application'
+              ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
+              : 'bg-white hover:bg-rose-50/50 border-rose-200/80 text-rose-950'
+          }`}
+        >
+          <div className="flex items-center justify-between mb-1">
+            <span className="font-bold text-[11px] uppercase tracking-wider">Vận dụng cao</span>
+            <span
+              className={`text-[10px] font-mono px-1.5 py-0.2 rounded font-bold ${
+                selectedLevel === 'high_application' ? 'bg-white/20 text-white' : 'bg-rose-100 text-rose-800'
+              }`}
+            >
+              {((highCount / totalCount) * 100).toFixed(0)}%
+            </span>
+          </div>
+          <p className="text-xl font-extrabold font-mono">{highCount} câu</p>
+          <p className={`text-[10px] mt-0.5 ${selectedLevel === 'high_application' ? 'text-rose-100' : 'text-slate-500'}`}>
+            Phân hóa sâu, bài toán thực tế
+          </p>
+        </button>
       </div>
 
       {/* Filter and Search Bar */}
@@ -211,7 +344,11 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
           </div>
         ) : (
           filteredQuestions.map((q, idx) => {
-            const levelInfo = COGNITIVE_LEVEL_LABELS[q.cognitiveLevel];
+            const levelInfo = COGNITIVE_LEVEL_LABELS[q.cognitiveLevel] || {
+              label: q.cognitiveLevel,
+              color: 'bg-slate-50 text-slate-700',
+              border: 'border-slate-200',
+            };
             return (
               <div
                 key={q.id}
@@ -226,11 +363,23 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
                     <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">
                       Toán {q.grade} (HK{q.semester})
                     </span>
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded border ${levelInfo.color}`}
-                    >
-                      {levelInfo.label}
-                    </span>
+
+                    {/* Inline Quick Cognitive Level Modifier */}
+                    <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-md px-1.5 py-0.5">
+                      <span className="text-[10px] text-slate-500 font-semibold">Mức độ:</span>
+                      <select
+                        value={q.cognitiveLevel}
+                        onChange={(e) => handleQuickChangeLevel(q, e.target.value as CognitiveLevel)}
+                        className={`text-[11px] font-bold rounded px-1.5 py-0.5 border cursor-pointer focus:outline-none ${levelInfo.color} ${levelInfo.border}`}
+                        title="Bấm để thay đổi mức độ nhận thức của câu hỏi"
+                      >
+                        <option value="recognition">Nhận biết</option>
+                        <option value="comprehension">Thông hiểu</option>
+                        <option value="application">Vận dụng</option>
+                        <option value="high_application">Vận dụng cao</option>
+                      </select>
+                    </div>
+
                     <span className="text-slate-400 text-[11px]">
                       {QUESTION_TYPE_LABELS[q.questionType]}
                     </span>
@@ -254,45 +403,45 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
                   </div>
                 </div>
 
-                {/* Chapter & Lesson */}
-                <div className="text-[11px] text-slate-400 font-medium">
-                  {q.chapter} · {q.lesson}
+                {/* Question Topic & Content */}
+                <div>
+                  <p className="text-[11px] text-indigo-600 font-medium mb-1">
+                    {q.chapter} · {q.topic}
+                  </p>
+                  <div className="text-xs sm:text-sm text-slate-900 font-medium leading-relaxed">
+                    <MathRenderer content={q.content} />
+                  </div>
                 </div>
 
-                {/* Question Content rendered with KaTeX */}
-                <div className="text-sm text-slate-900 font-medium leading-relaxed pt-1">
-                  <MathRenderer content={q.content} />
-                </div>
-
-                {/* Options List */}
+                {/* Multiple Choice Options */}
                 {q.options && q.options.length > 0 && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs">
                     {q.options.map((opt, optIdx) => {
                       const letter = String.fromCharCode(65 + optIdx);
-                      const isCorrect = String(q.correctAnswer).toUpperCase() === letter;
+                      const isCorrect = q.correctAnswer === letter;
                       return (
                         <div
                           key={optIdx}
-                          className={`p-2.5 rounded-xl border text-xs flex items-start gap-2.5 transition-colors ${
+                          className={`p-2.5 rounded-xl border flex items-center gap-2 transition-colors ${
                             isCorrect
-                              ? 'bg-emerald-50/80 border-emerald-300 text-emerald-900 font-medium'
-                              : 'bg-slate-50/60 border-slate-200/80 text-slate-700'
+                              ? 'bg-emerald-50/70 border-emerald-300 text-emerald-950 font-semibold'
+                              : 'bg-slate-50/50 border-slate-200 text-slate-700'
                           }`}
                         >
                           <span
-                            className={`w-5 h-5 rounded-md flex items-center justify-center font-bold text-[11px] shrink-0 ${
+                            className={`w-5 h-5 rounded-md flex items-center justify-center font-bold text-xs shrink-0 ${
                               isCorrect
                                 ? 'bg-emerald-600 text-white'
-                                : 'bg-white border border-slate-200 text-slate-600'
+                                : 'bg-slate-200 text-slate-700'
                             }`}
                           >
                             {letter}
                           </span>
-                          <div className="flex-1 min-w-0 pt-0.5">
+                          <div className="flex-1">
                             <MathRenderer content={opt} inline />
                           </div>
                           {isCorrect && (
-                            <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                            <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
                           )}
                         </div>
                       );
@@ -360,7 +509,7 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
                   <select
                     value={newLevel}
                     onChange={(e) => setNewLevel(e.target.value as CognitiveLevel)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"
                   >
                     <option value="recognition">Nhận biết</option>
                     <option value="comprehension">Thông hiểu</option>

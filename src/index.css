@@ -1,12 +1,27 @@
 @import "tailwindcss";
 
+:root {
+  --font-size-base: 13px;
+}
+
 @layer base {
-  body {
+  html, body {
+    font-size: var(--font-size-base);
+    line-height: 1.5;
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color: #1e293b;
+    background-color: #f8fafc;
   }
   
   code, pre, .font-mono {
     font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Default base font size for interactive elements, labels, tables, forms */
+  input, select, textarea, button, label, table, th, td {
+    font-size: var(--font-size-base);
   }
 }
 
@@ -35,6 +50,33 @@
   overflow-x: auto;
   overflow-y: hidden;
   padding: 0.25em 0;
+}
+
+.katex {
+  font-size: 1.05em;
+  text-rendering: auto;
+}
+
+/* Slider math display: auto wrap, no scrollbars */
+.slider-math-box {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.slider-math-box::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.slider-math-box .katex {
+  font-size: 1em;
+  max-width: 100%;
+}
+
+.slider-math-box .katex-html {
+  white-space: normal;
+  word-break: break-word;
 }
 
 /* Sidebar menu scrollbar hidden while retaining full scrollability */
