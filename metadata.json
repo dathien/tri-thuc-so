@@ -1,0 +1,8 @@
+{
+  "name": "EduTest Smart - Nền tảng Dạy học & Khảo thí Toán THPT",
+  "description": "Hệ thống hỗ trợ giáo viên tổ chức dạy học, ngân hàng câu hỏi, tạo đề ma trận, kiểm tra trực tuyến, phòng Lab Toán 2D/3D và hoạt động tương tác theo Chương trình GDPT 2018.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
