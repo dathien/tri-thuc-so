@@ -243,7 +243,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="sidebar-menu flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2.5 py-3 space-y-1">
           {/* Section: Giảng dạy & Đánh giá */}
           {!isCollapsed && (
-            <div className="px-3 pt-1 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            <div className="px-3 pt-1 pb-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
               {userRole === 'teacher' ? 'Dạy học & Khảo thí' : 'Nhiệm vụ học tập'}
             </div>
           )}
@@ -261,7 +261,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             return (
               <React.Fragment key={item.key}>
                 {showSubheader && (
-                  <div className="px-3 pt-3 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  <div className="px-3 pt-3 pb-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                     Không gian Khám phá Toán
                   </div>
                 )}
@@ -269,7 +269,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <button
                   type="button"
                   onClick={() => handleSelect(item.key)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-xs font-semibold transition-all duration-150 group ${
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-[14px] sm:text-[15px] font-semibold transition-all duration-150 group ${
                     isActive
                       ? 'bg-indigo-50 text-indigo-700 shadow-xs border border-indigo-200/60'
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
@@ -283,7 +283,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         : 'text-slate-400 group-hover:text-slate-600'
                     }`}
                   >
-                    <Icon className="w-4.5 h-4.5" />
+                    <Icon className="w-5 h-5" />
                   </div>
 
                   {!isCollapsed && (
@@ -291,7 +291,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       <span className="truncate">{item.label}</span>
                       {item.badge && (
                         <span
-                          className={`text-[10px] px-1.5 py-0.5 rounded-md shrink-0 font-medium ${
+                          className={`text-[11px] px-1.5 py-0.5 rounded-md shrink-0 font-medium ${
                             item.badgeColor || 'bg-slate-100 text-slate-600'
                           }`}
                         >

@@ -120,128 +120,128 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
         </div>
       </div>
 
-      {/* Real Statistics Metric Strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+      {/* Real Statistics Metric Grid - Spacious, responsive & no text truncation */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
         {/* Stat 1: Lớp học */}
         <div
           onClick={() => handleCardClick('classes')}
-          className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs hover:shadow-xs hover:border-indigo-200 cursor-pointer transition-all group"
+          className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs hover:shadow-sm hover:border-indigo-300 cursor-pointer transition-all group flex flex-col justify-between"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500">Lớp học</span>
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
-              <GraduationCap className="w-4 h-4" />
+            <span className="text-[15px] font-bold text-slate-700">Lớp học đang quản lý</span>
+            <div className="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
+              <GraduationCap className="w-5 h-5" />
             </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-2xl font-extrabold text-slate-900 font-mono tabular-nums">
+          <div className="mt-3 flex items-baseline gap-1.5">
+            <span className="text-3xl font-extrabold text-slate-900 font-mono tabular-nums">
               {totalClasses}
             </span>
-            <span className="text-[11px] text-slate-400">lớp</span>
+            <span className="text-sm font-medium text-slate-500">lớp học</span>
           </div>
-          <p className="text-[10px] text-slate-400 mt-1 truncate">Khối 10, 11, 12</p>
+          <p className="text-[13px] text-slate-500 mt-1.5">Phân bổ khối 10, 11 và 12</p>
         </div>
 
         {/* Stat 2: Học sinh */}
         <div
           onClick={() => handleCardClick('classes')}
-          className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs hover:shadow-xs hover:border-indigo-200 cursor-pointer transition-all group"
+          className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs hover:shadow-sm hover:border-blue-300 cursor-pointer transition-all group flex flex-col justify-between"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500">Tổng số học sinh</span>
-            <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-              <Users className="w-4 h-4" />
+            <span className="text-[15px] font-bold text-slate-700">Tổng số học sinh</span>
+            <div className="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+              <Users className="w-5 h-5" />
             </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-2xl font-extrabold text-slate-900 font-mono tabular-nums">
+          <div className="mt-3 flex items-baseline gap-1.5">
+            <span className="text-3xl font-extrabold text-slate-900 font-mono tabular-nums">
               {totalStudents}
             </span>
-            <span className="text-[11px] text-slate-400">em</span>
+            <span className="text-sm font-medium text-slate-500">học sinh</span>
           </div>
-          <p className="text-[10px] text-slate-400 mt-1 truncate">Hồ sơ đang quản lý</p>
+          <p className="text-[13px] text-slate-500 mt-1.5">Hồ sơ học tập trực tuyến đang hoạt động</p>
         </div>
 
         {/* Stat 3: Ngân hàng câu hỏi */}
         <div
           onClick={() => handleCardClick('questions')}
-          className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs hover:shadow-xs hover:border-indigo-200 cursor-pointer transition-all group"
+          className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs hover:shadow-sm hover:border-purple-300 cursor-pointer transition-all group flex flex-col justify-between"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500">Ngân hàng câu hỏi</span>
-            <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center group-hover:bg-purple-100 transition-colors">
-              <Database className="w-4 h-4" />
+            <span className="text-[15px] font-bold text-slate-700">Ngân hàng câu hỏi</span>
+            <div className="w-11 h-11 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center group-hover:bg-purple-100 transition-colors">
+              <Database className="w-5 h-5" />
             </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-2xl font-extrabold text-slate-900 font-mono tabular-nums">
+          <div className="mt-3 flex items-baseline gap-1.5">
+            <span className="text-3xl font-extrabold text-slate-900 font-mono tabular-nums">
               {totalQuestions}
             </span>
-            <span className="text-[11px] text-slate-400">câu</span>
+            <span className="text-sm font-medium text-slate-500">câu hỏi</span>
           </div>
-          <p className="text-[10px] text-slate-400 mt-1 truncate">Chuẩn 4 mức nhận thức</p>
+          <p className="text-[13px] text-slate-500 mt-1.5">Phân cấp theo 4 mức độ nhận thức</p>
         </div>
 
         {/* Stat 4: Đề kiểm tra đã tạo */}
         <div
           onClick={() => handleCardClick('exam-vault')}
-          className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs hover:shadow-xs hover:border-indigo-200 cursor-pointer transition-all group"
+          className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs hover:shadow-sm hover:border-emerald-300 cursor-pointer transition-all group flex flex-col justify-between"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500">Đề kiểm tra đã tạo</span>
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
-              <FileText className="w-4 h-4" />
+            <span className="text-[15px] font-bold text-slate-700">Đề kiểm tra đã tạo</span>
+            <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
+              <FileText className="w-5 h-5" />
             </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-2xl font-extrabold text-slate-900 font-mono tabular-nums">
+          <div className="mt-3 flex items-baseline gap-1.5">
+            <span className="text-3xl font-extrabold text-slate-900 font-mono tabular-nums">
               {totalExams}
             </span>
-            <span className="text-[11px] text-slate-400">đề</span>
+            <span className="text-sm font-medium text-slate-500">bộ đề</span>
           </div>
-          <p className="text-[10px] text-emerald-600 font-medium mt-1 truncate">
-            {assignedExamsCount} đề đang mở
+          <p className="text-[13px] text-emerald-600 font-semibold mt-1.5">
+            {assignedExamsCount} đề đang mở làm bài trực tuyến
           </p>
         </div>
 
         {/* Stat 5: Bài đã nộp chấm điểm */}
         <div
           onClick={() => handleCardClick('grading')}
-          className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs hover:shadow-xs hover:border-indigo-200 cursor-pointer transition-all group"
+          className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs hover:shadow-sm hover:border-amber-300 cursor-pointer transition-all group flex flex-col justify-between"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500">Bài đã nộp</span>
-            <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center group-hover:bg-amber-100 transition-colors">
-              <CheckCircle className="w-4 h-4" />
+            <span className="text-[15px] font-bold text-slate-700">Bài thi đã nộp</span>
+            <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:bg-amber-100 transition-colors">
+              <CheckCircle className="w-5 h-5" />
             </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-2xl font-extrabold text-slate-900 font-mono tabular-nums">
+          <div className="mt-3 flex items-baseline gap-1.5">
+            <span className="text-3xl font-extrabold text-slate-900 font-mono tabular-nums">
               {totalSubmissions}
             </span>
-            <span className="text-[11px] text-slate-400">bài</span>
+            <span className="text-sm font-medium text-slate-500">bài làm</span>
           </div>
-          <p className="text-[10px] text-slate-400 mt-1 truncate">Đã chấm tự động 100%</p>
+          <p className="text-[13px] text-slate-500 mt-1.5">Đã hoàn thành chấm điểm tự động 100%</p>
         </div>
 
         {/* Stat 6: Điểm TB / Tiến độ */}
         <div
           onClick={() => handleCardClick('grading')}
-          className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs hover:shadow-xs hover:border-indigo-200 cursor-pointer transition-all group"
+          className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs hover:shadow-sm hover:border-rose-300 cursor-pointer transition-all group flex flex-col justify-between"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500">Điểm trung bình</span>
-            <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center group-hover:bg-rose-100 transition-colors">
-              <TrendingUp className="w-4 h-4" />
+            <span className="text-[15px] font-bold text-slate-700">Điểm trung bình môn</span>
+            <div className="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center group-hover:bg-rose-100 transition-colors">
+              <TrendingUp className="w-5 h-5" />
             </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-2xl font-extrabold text-indigo-700 font-mono tabular-nums">
+          <div className="mt-3 flex items-baseline gap-1.5">
+            <span className="text-3xl font-extrabold text-indigo-700 font-mono tabular-nums">
               {averageScore}
             </span>
-            <span className="text-[11px] text-slate-400">/ 10</span>
+            <span className="text-sm font-medium text-slate-500">/ 10.0</span>
           </div>
-          <p className="text-[10px] text-slate-400 mt-1 truncate">Đánh giá thực tế</p>
+          <p className="text-[13px] text-slate-500 mt-1.5">Đánh giá theo năng lực thực tế</p>
         </div>
       </div>
 

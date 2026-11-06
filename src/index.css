@@ -1,13 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --font-size-base: 13px;
+  --font-size-base: 15px;
+  --font-size-secondary: 14px;
+  --font-size-btn: 15px;
+  --font-size-card-title: 17px;
+  --font-size-page-title: 23px;
 }
 
 @layer base {
   html, body {
     font-size: var(--font-size-base);
-    line-height: 1.5;
+    line-height: 1.6;
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -70,7 +74,7 @@
 }
 
 .slider-math-box .katex {
-  font-size: 1em;
+  font-size: 1.02em;
   max-width: 100%;
 }
 
@@ -94,4 +98,88 @@
   display: none;
   width: 0;
   height: 0;
+}
+
+/* Internal Slide Ambient Animations */
+@keyframes slideFloatSlow {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes slideFloatReverse {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(6px);
+  }
+}
+
+@keyframes slidePulseSubtle {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.95;
+  }
+  50% {
+    transform: scale(1.025);
+    opacity: 1;
+  }
+}
+
+@keyframes slideBarGrowth {
+  0% {
+    transform: scaleX(0.7);
+  }
+  50% {
+    transform: scaleX(1);
+  }
+  100% {
+    transform: scaleX(0.7);
+  }
+}
+
+@keyframes slideRotateSlow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.anim-float-slow {
+  animation: slideFloatSlow 4s ease-in-out infinite;
+}
+
+.anim-float-reverse {
+  animation: slideFloatReverse 4.5s ease-in-out infinite;
+}
+
+.anim-pulse-subtle {
+  animation: slidePulseSubtle 3s ease-in-out infinite;
+}
+
+.anim-bar-grow {
+  transform-origin: left;
+  animation: slideBarGrowth 5s ease-in-out infinite;
+}
+
+.anim-rotate-slow {
+  transform-origin: center;
+  animation: slideRotateSlow 24s linear infinite;
+}
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .anim-float-slow,
+  .anim-float-reverse,
+  .anim-pulse-subtle,
+  .anim-bar-grow,
+  .anim-rotate-slow {
+    animation: none !important;
+  }
 }

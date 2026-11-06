@@ -515,17 +515,18 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Desktop Table View (Visible on md+) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50/80 border-b border-slate-100 text-slate-500 font-semibold uppercase text-[10px]">
+            <thead className="bg-slate-50/80 border-b border-slate-100 text-slate-500 font-semibold uppercase text-[11px]">
               <tr>
                 <th className="px-4 py-3 min-w-[200px]">Chương / Mạch kiến thức</th>
                 <th className="px-4 py-3 min-w-[200px]">Chủ đề chi tiết</th>
-                <th className="px-2 py-3 text-center min-w-[80px] text-emerald-700">Nhận biết</th>
-                <th className="px-2 py-3 text-center min-w-[80px] text-blue-700">Thông hiểu</th>
-                <th className="px-2 py-3 text-center min-w-[80px] text-amber-700">Vận dụng</th>
-                <th className="px-2 py-3 text-center min-w-[80px] text-rose-700">Vận dụng cao</th>
-                <th className="px-3 py-3 text-center font-bold">Tổng câu</th>
+                <th className="px-2 py-3 text-center min-w-[75px] text-emerald-700">Nhận biết</th>
+                <th className="px-2 py-3 text-center min-w-[75px] text-blue-700">Thông hiểu</th>
+                <th className="px-2 py-3 text-center min-w-[75px] text-amber-700">Vận dụng</th>
+                <th className="px-2 py-3 text-center min-w-[75px] text-rose-700">Vận dụng cao</th>
+                <th className="px-3 py-3 text-center font-bold">Tổng cộng</th>
                 <th className="px-3 py-3 text-right font-bold min-w-[90px]">Điểm số</th>
                 <th className="px-3 py-3 text-center">Xóa</th>
               </tr>
@@ -538,7 +539,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
                       type="text"
                       value={item.chapter}
                       onChange={(e) => handleItemChange(idx, 'chapter', e.target.value)}
-                      className="w-full px-2 py-1 bg-transparent hover:bg-white focus:bg-white border border-transparent focus:border-slate-300 rounded font-semibold text-slate-900 focus:outline-none"
+                      className="w-full px-2 py-1 bg-transparent hover:bg-white focus:bg-white border border-transparent focus:border-slate-300 rounded font-semibold text-slate-900 focus:outline-none text-[14px]"
                     />
                   </td>
                   <td className="px-4 py-2.5">
@@ -546,7 +547,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
                       type="text"
                       value={item.topic}
                       onChange={(e) => handleItemChange(idx, 'topic', e.target.value)}
-                      className="w-full px-2 py-1 bg-transparent hover:bg-white focus:bg-white border border-transparent focus:border-slate-300 rounded text-slate-600 focus:outline-none"
+                      className="w-full px-2 py-1 bg-transparent hover:bg-white focus:bg-white border border-transparent focus:border-slate-300 rounded text-slate-600 focus:outline-none text-[14px]"
                     />
                   </td>
                   <td className="px-2 py-2.5 text-center">
@@ -557,7 +558,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
                       onChange={(e) =>
                         handleItemChange(idx, 'recognition', Math.max(0, parseInt(e.target.value) || 0))
                       }
-                      className="w-14 px-1.5 py-1 text-center font-mono font-bold text-emerald-700 bg-emerald-50/60 border border-emerald-200 rounded focus:bg-white focus:outline-none"
+                      className="w-14 px-1.5 py-1 text-center font-mono font-bold text-emerald-700 bg-emerald-50/60 border border-emerald-200 rounded focus:bg-white focus:outline-none text-[14px]"
                     />
                   </td>
                   <td className="px-2 py-2.5 text-center">
@@ -568,7 +569,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
                       onChange={(e) =>
                         handleItemChange(idx, 'comprehension', Math.max(0, parseInt(e.target.value) || 0))
                       }
-                      className="w-14 px-1.5 py-1 text-center font-mono font-bold text-blue-700 bg-blue-50/60 border border-blue-200 rounded focus:bg-white focus:outline-none"
+                      className="w-14 px-1.5 py-1 text-center font-mono font-bold text-blue-700 bg-blue-50/60 border border-blue-200 rounded focus:bg-white focus:outline-none text-[14px]"
                     />
                   </td>
                   <td className="px-2 py-2.5 text-center">
@@ -579,7 +580,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
                       onChange={(e) =>
                         handleItemChange(idx, 'application', Math.max(0, parseInt(e.target.value) || 0))
                       }
-                      className="w-14 px-1.5 py-1 text-center font-mono font-bold text-amber-700 bg-amber-50/60 border border-amber-200 rounded focus:bg-white focus:outline-none"
+                      className="w-14 px-1.5 py-1 text-center font-mono font-bold text-amber-700 bg-amber-50/60 border border-amber-200 rounded focus:bg-white focus:outline-none text-[14px]"
                     />
                   </td>
                   <td className="px-2 py-2.5 text-center">
@@ -590,10 +591,10 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
                       onChange={(e) =>
                         handleItemChange(idx, 'highApplication', Math.max(0, parseInt(e.target.value) || 0))
                       }
-                      className="w-14 px-1.5 py-1 text-center font-mono font-bold text-rose-700 bg-rose-50/60 border border-rose-200 rounded focus:bg-white focus:outline-none"
+                      className="w-14 px-1.5 py-1 text-center font-mono font-bold text-rose-700 bg-rose-50/60 border border-rose-200 rounded focus:bg-white focus:outline-none text-[14px]"
                     />
                   </td>
-                  <td className="px-3 py-2.5 text-center font-mono font-bold text-slate-900">
+                  <td className="px-3 py-2.5 text-center font-mono font-bold text-slate-900 text-[14px]">
                     {item.totalQuestions}
                   </td>
                   <td className="px-3 py-2.5 text-right">
@@ -605,7 +606,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
                       onChange={(e) =>
                         handleItemChange(idx, 'totalPoints', Math.max(0, parseFloat(e.target.value) || 0))
                       }
-                      className="w-16 px-1.5 py-1 text-right font-mono font-bold text-indigo-700 bg-indigo-50/60 border border-indigo-200 rounded focus:bg-white focus:outline-none"
+                      className="w-16 px-1.5 py-1 text-right font-mono font-bold text-indigo-700 bg-indigo-50/60 border border-indigo-200 rounded focus:bg-white focus:outline-none text-[14px]"
                     />
                   </td>
                   <td className="px-3 py-2.5 text-center">
@@ -622,10 +623,10 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
                 </tr>
               ))}
             </tbody>
-            <tfoot className="bg-slate-50 font-bold border-t border-slate-200 text-slate-900">
+            <tfoot className="bg-slate-50 font-bold border-t border-slate-200 text-slate-900 text-[14px]">
               <tr>
-                <td colSpan={2} className="px-4 py-3 uppercase text-[11px]">
-                  Tổng cộng phân bổ:
+                <td colSpan={2} className="px-4 py-3 uppercase text-[12px]">
+                  Tổng cộng toàn đề thi:
                 </td>
                 <td className="px-2 py-3 text-center font-mono text-emerald-700">
                   {totalRec} ({recPct.toFixed(0)}%)
@@ -649,6 +650,125 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
               </tr>
             </tfoot>
           </table>
+        </div>
+
+        {/* Mobile Adaptive Card View (Visible on small screens < md) */}
+        <div className="block md:hidden divide-y divide-slate-100 p-4 space-y-4">
+          {currentMatrix.items.map((item, idx) => (
+            <div key={idx} className="bg-slate-50/70 p-4 rounded-xl border border-slate-200 space-y-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-slate-400">Chủ đề {idx + 1}</span>
+                  <input
+                    type="text"
+                    value={item.chapter}
+                    onChange={(e) => handleItemChange(idx, 'chapter', e.target.value)}
+                    className="w-full px-2 py-1 bg-white border border-slate-200 rounded font-bold text-slate-900 text-[14px]"
+                    placeholder="Tên chương/mạch kiến thức"
+                  />
+                  <input
+                    type="text"
+                    value={item.topic}
+                    onChange={(e) => handleItemChange(idx, 'topic', e.target.value)}
+                    className="w-full px-2 py-1 bg-white border border-slate-200 rounded text-slate-600 text-[13px]"
+                    placeholder="Chủ đề chi tiết"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteItem(idx)}
+                  disabled={currentMatrix.items.length <= 1}
+                  className="p-1.5 text-slate-400 hover:text-rose-600 disabled:opacity-30"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* 4 Cognitive Levels in 2x2 grid */}
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="bg-emerald-50/70 p-2 rounded-lg border border-emerald-200 flex items-center justify-between">
+                  <span className="text-emerald-800 font-semibold text-[12px]">Nhận biết</span>
+                  <input
+                    type="number"
+                    min={0}
+                    value={item.recognition}
+                    onChange={(e) =>
+                      handleItemChange(idx, 'recognition', Math.max(0, parseInt(e.target.value) || 0))
+                    }
+                    className="w-12 px-1 py-0.5 text-center font-mono font-bold bg-white border border-emerald-300 rounded text-emerald-800"
+                  />
+                </div>
+                <div className="bg-blue-50/70 p-2 rounded-lg border border-blue-200 flex items-center justify-between">
+                  <span className="text-blue-800 font-semibold text-[12px]">Thông hiểu</span>
+                  <input
+                    type="number"
+                    min={0}
+                    value={item.comprehension}
+                    onChange={(e) =>
+                      handleItemChange(idx, 'comprehension', Math.max(0, parseInt(e.target.value) || 0))
+                    }
+                    className="w-12 px-1 py-0.5 text-center font-mono font-bold bg-white border border-blue-300 rounded text-blue-800"
+                  />
+                </div>
+                <div className="bg-amber-50/70 p-2 rounded-lg border border-amber-200 flex items-center justify-between">
+                  <span className="text-amber-800 font-semibold text-[12px]">Vận dụng</span>
+                  <input
+                    type="number"
+                    min={0}
+                    value={item.application}
+                    onChange={(e) =>
+                      handleItemChange(idx, 'application', Math.max(0, parseInt(e.target.value) || 0))
+                    }
+                    className="w-12 px-1 py-0.5 text-center font-mono font-bold bg-white border border-amber-300 rounded text-amber-800"
+                  />
+                </div>
+                <div className="bg-rose-50/70 p-2 rounded-lg border border-rose-200 flex items-center justify-between">
+                  <span className="text-rose-800 font-semibold text-[12px]">Vận dụng cao</span>
+                  <input
+                    type="number"
+                    min={0}
+                    value={item.highApplication}
+                    onChange={(e) =>
+                      handleItemChange(idx, 'highApplication', Math.max(0, parseInt(e.target.value) || 0))
+                    }
+                    className="w-12 px-1 py-0.5 text-center font-mono font-bold bg-white border border-rose-300 rounded text-rose-800"
+                  />
+                </div>
+              </div>
+
+              {/* Card totals */}
+              <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-200/60">
+                <span className="font-semibold text-slate-600">
+                  Tổng câu: <strong className="text-slate-900 font-mono">{item.totalQuestions}</strong>
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-500 font-semibold">Điểm:</span>
+                  <input
+                    type="number"
+                    step={0.1}
+                    min={0}
+                    value={item.totalPoints}
+                    onChange={(e) =>
+                      handleItemChange(idx, 'totalPoints', Math.max(0, parseFloat(e.target.value) || 0))
+                    }
+                    className="w-14 px-1 py-0.5 text-right font-mono font-bold text-indigo-700 bg-white border border-slate-300 rounded"
+                  />
+                  <span className="text-slate-500">đ</span>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {/* Mobile Summary footer card */}
+          <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl space-y-1 text-xs">
+            <p className="font-bold text-indigo-950">Tổng cộng ma trận:</p>
+            <p className="text-slate-700">
+              Tổng số câu: <strong className="font-mono text-indigo-700">{totalQuestionsCount} câu</strong> · Tổng điểm: <strong className="font-mono text-indigo-700">{totalCalculatedPoints.toFixed(2)}đ</strong>
+            </p>
+            <p className="text-[11px] text-slate-500">
+              NB: {totalRec} ({recPct.toFixed(0)}%) · TH: {totalComp} ({compPct.toFixed(0)}%) · VD: {totalApp} ({appPct.toFixed(0)}%) · VDC: {totalHigh} ({highPct.toFixed(0)}%)
+            </p>
+          </div>
         </div>
 
         <div className="p-4 bg-slate-50 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs">
