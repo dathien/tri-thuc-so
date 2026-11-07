@@ -5,6 +5,7 @@ interface MathRendererProps {
   content: string;
   className?: string;
   inline?: boolean;
+  block?: boolean;
 }
 
 /**
@@ -15,7 +16,10 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
   content,
   className = '',
   inline = false,
+  block = false,
 }) => {
+  const isDisplayMode = block || !inline;
+
   const renderedContent = useMemo(() => {
     if (!content) return '';
 
@@ -33,7 +37,7 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
           parts.push(escapeHtml(content.substring(lastIdx, match.index)));
         }
         const raw = match[0];
-        const isBlock = raw.startsWith('$$') || raw.startsWith('\\[');
+        const isBlockSegment = raw.startsWith('$$') || raw.startsWith('\\[');
         let math = '';
         if (raw.startsWith('$$') || raw.startsWith('\\[')) {
           math = raw.slice(2, -2).trim();
@@ -44,7 +48,7 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
         try {
           parts.push(
             katex.renderToString(math, {
-              displayMode: isBlock,
+              displayMode: isBlockSegment || (!inline && isDisplayMode),
               throwOnError: false,
             })
           );
@@ -61,40 +65,62 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
     }
 
     // 2. No explicit delimiters. Check if it contains LaTeX commands or mathematical operators
-    const hasLatex = /\\[a-zA-Z]+|\^|_/.test(content);
+    const hasLatex = /\\[a-zA-Z]+|\^|_|\\text|\\frac|\\sqrt|\\alpha|\\circ/.test(content);
     if (hasLatex) {
-      // Check if it is a pure formula (no Vietnamese accent letters)
-      const hasVietnamese = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i.test(content);
-
-      if (!hasVietnamese) {
-        try {
-          return katex.renderToString(content, {
-            displayMode: !inline,
-            throwOnError: false,
-          });
-        } catch {
-          // If direct KaTeX parse fails, fallback to regex extraction
-        }
+      // First, attempt direct full parse
+      try {
+        return katex.renderToString(content, {
+          displayMode: isDisplayMode,
+          throwOnError: true,
+        });
+      } catch {
+        // Direct parse threw an error. It might be mixed plain text with un-delimited LaTeX tokens.
       }
 
-      // If it contains mixed text with un-delimited LaTeX commands like (\alpha): Ax + By + Cz + D = 0
-      const mathTokenRegex = /(\(?\\[a-zA-Z]+(?:\s*\{[^{}]*\})*(?:\s*[\+\-\*\/\=\<\>\:\^\_\|\;]\s*[\w\d\.\,\(\)\{\}\\\^]+)*\)?)/g;
-      return content.replace(mathTokenRegex, (m) => {
-        try {
-          return katex.renderToString(m, { displayMode: false, throwOnError: false });
-        } catch {
-          return escapeHtml(m);
+      // If mixed text, extract math segments starting with backslash or formulas
+      const tokenRegex = /(\\([a-zA-Z]+|text\{[^{}]*\})(\{[^{}]*\}|\[[^\[\]]*\])*(\^[0-9a-zA-Z\{\}\\]+|_[0-9a-zA-Z\{\}\\]+)*(\s*[\+\-\*\/\=\<\>\:\approx\ne\le\ge]\s*(\\[a-zA-Z]+|\d+([\,\.]\d+)?|[a-zA-Z]|\{[^{}]*\}|\^[0-9a-zA-Z\{\}\\]+|_[0-9a-zA-Z\{\}\\]+))*)/g;
+      
+      let lastPos = 0;
+      const parts: string[] = [];
+      let tokenMatch: RegExpExecArray | null;
+
+      while ((tokenMatch = tokenRegex.exec(content)) !== null) {
+        if (tokenMatch.index > lastPos) {
+          parts.push(escapeHtml(content.substring(lastPos, tokenMatch.index)));
         }
-      });
+        const rawToken = tokenMatch[0];
+        try {
+          parts.push(
+            katex.renderToString(rawToken, {
+              displayMode: false,
+              throwOnError: false,
+            })
+          );
+        } catch {
+          parts.push(escapeHtml(rawToken));
+        }
+        lastPos = tokenRegex.lastIndex;
+      }
+
+      if (lastPos < content.length) {
+        parts.push(escapeHtml(content.substring(lastPos)));
+      }
+
+      if (parts.length > 0) {
+        return parts.join('');
+      }
+
+      // Fallback
+      return katex.renderToString(content, { displayMode: false, throwOnError: false });
     }
 
     // 3. Plain text
     return escapeHtml(content);
-  }, [content, inline]);
+  }, [content, inline, isDisplayMode]);
 
   return (
     <span
-      className={`inline-math-container leading-relaxed ${className}`}
+      className={`${isDisplayMode ? 'block-math-container my-1.5 block text-center' : 'inline-math-container'} leading-relaxed ${className}`}
       dangerouslySetInnerHTML={{ __html: renderedContent }}
     />
   );
@@ -111,4 +137,3 @@ function escapeHtml(str: string): string {
 }
 
 export default MathRenderer;
-

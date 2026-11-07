@@ -505,7 +505,7 @@ export const OverviewSlider: React.FC<OverviewSliderProps> = ({ onNavigate }) =>
                         {/* Normal Vector n */}
                         <line x1="10" y1="5" x2="35" y2="-25" stroke="#FBBF24" strokeWidth="2.2" />
                         <text x="40" y="-22" fill="#FBBF24" fontSize="10" fontWeight="bold">
-                          vec(n)
+                          n⃗
                         </text>
                       </g>
                     </svg>
