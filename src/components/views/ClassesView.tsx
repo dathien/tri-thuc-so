@@ -73,7 +73,7 @@ export const ClassesView: React.FC<ClassesViewProps> = ({
       studentCount: 0,
       roomCode,
       homeroomTeacher: 'GV. Hồ Nguyễn Đa Thiện',
-      description: newClassDescription || 'Lớp học Toán THPT GDPT 2018',
+      description: newClassDescription || 'Lớp học Toán THPT',
     });
 
     setNewClassName('');

@@ -396,7 +396,7 @@ export const ExamBuilderView: React.FC<ExamBuilderViewProps> = ({
                 onClick={() => applyBuilderPreset('standard')}
                 className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-indigo-300 font-semibold text-slate-700 text-[11px]"
               >
-                Chuẩn GDPT 2018 (40-35-20-5)
+                Mẫu chuẩn (40-35-20-5)
               </button>
               <button
                 type="button"

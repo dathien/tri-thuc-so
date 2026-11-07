@@ -29,7 +29,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 }) => {
   const [name, setName] = useState(currentUser.name);
   const [email, setEmail] = useState(currentUser.email);
-  const [school, setSchool] = useState(currentUser.school || 'Trường THPT Chuyên GDPT 2018');
+  const [school, setSchool] = useState(currentUser.school || 'Trường THPT Chuyên');
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   const handleSave = (e: React.FormEvent) => {
@@ -55,7 +55,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </span>
         </div>
         <p className="text-xs text-slate-500 mt-0.5">
-          Tùy chỉnh thông tin giáo viên, cấu hình môn học GDPT 2018 và âm thanh phản hồi.
+          Tùy chỉnh thông tin giáo viên, cấu hình môn học và âm thanh phản hồi.
         </p>
       </div>
 
@@ -130,11 +130,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </div>
         </div>
 
-        {/* GDPT 2018 Config */}
+        {/* Academic Evaluation Config */}
         <div>
           <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700 border-b border-slate-100 pb-2 flex items-center gap-2">
             <BookOpen className="w-4 h-4 text-indigo-600" />
-            Chuẩn Đánh giá Chương trình GDPT 2018
+            Chuẩn Đánh giá Môn Toán THPT
           </h2>
 
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">

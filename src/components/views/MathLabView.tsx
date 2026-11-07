@@ -1045,9 +1045,6 @@ export const MathLabView: React.FC<MathLabViewProps> = ({ catalog }) => {
             <h1 className="text-lg sm:text-xl font-bold text-slate-900">
               Phòng Lab Toán học 2D/3D Trực quan
             </h1>
-            <span className="text-xs bg-cyan-50 text-cyan-800 font-bold px-2.5 py-0.5 rounded-full border border-cyan-200">
-              Mô phỏng Động GDPT 2018
-            </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
             Khám phá trực quan Không gian 3D Oxyz, Đường tròn lượng giác, Hàm bậc ba và Parabol bậc hai.
@@ -1835,7 +1832,7 @@ export const MathLabView: React.FC<MathLabViewProps> = ({ catalog }) => {
         <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden space-y-4 p-5">
           <div>
             <h3 className="font-bold text-sm text-slate-900">
-              Bảng đối chiếu Danh mục Bài học SGK &amp; Phòng Lab GDPT 2018
+              Bảng đối chiếu Danh mục Bài học SGK &amp; Phòng Lab Toán THPT
             </h3>
             <p className="text-xs text-slate-500">
               Bảng danh mục bao phủ Toán 10–12. Các hoạt động đã hoàn thành cho phép mở tương tác ngay; các hoạt động trong lộ trình tiếp theo được ghi chú minh bạch.

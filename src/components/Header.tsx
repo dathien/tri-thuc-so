@@ -99,9 +99,6 @@ export const Header: React.FC<HeaderProps> = ({
                   <span className="font-extrabold text-base sm:text-xl tracking-tight text-white">
                     EduTest Smart
                   </span>
-                  <span className="hidden sm:inline-block text-[10px] font-semibold uppercase tracking-wider bg-white/15 px-2 py-0.5 rounded-md border border-white/20 text-indigo-100">
-                    GDPT 2018
-                  </span>
                 </div>
                 <p className="text-[11px] sm:text-xs text-indigo-200 hidden md:block">
                   Hệ thống dạy học, khảo thí &amp; hoạt động tương tác Toán THPT

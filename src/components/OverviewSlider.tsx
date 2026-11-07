@@ -106,7 +106,7 @@ export const OverviewSlider: React.FC<OverviewSliderProps> = ({ onNavigate }) =>
             <div className="lg:col-span-5 space-y-3.5">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-bold bg-[#DBEAFE] text-[#2563EB] border border-[#2563EB]/20">
                 <Sparkles className="w-4 h-4 text-[#2563EB]" />
-                Nền tảng GDPT 2018 Môn Toán
+                Nền tảng Dạy học &amp; Khảo thí Môn Toán
               </span>
 
               <h2 className="text-[22px] sm:text-[24px] font-extrabold text-slate-900 tracking-tight leading-snug">
@@ -327,7 +327,7 @@ export const OverviewSlider: React.FC<OverviewSliderProps> = ({ onNavigate }) =>
               </span>
 
               <h2 className="text-[22px] sm:text-[24px] font-extrabold text-slate-900 tracking-tight leading-snug">
-                Khảo thí Thông minh GDPT 2018
+                Khảo thí Thông minh &amp; Đánh giá Số
               </h2>
 
               <p className="text-[15px] text-slate-600 leading-relaxed">

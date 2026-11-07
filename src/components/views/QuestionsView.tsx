@@ -136,7 +136,7 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Tổ chức theo ma trận GDPT 2018: Lớp 10–12, 4 mức độ nhận thức (có thể gán và điều chỉnh trực tiếp), hỗ trợ công thức KaTeX.
+            Tổ chức theo ma trận chuẩn hóa: Lớp 10–12, 4 mức độ nhận thức (có thể gán và điều chỉnh trực tiếp), hỗ trợ công thức KaTeX.
           </p>
         </div>
 

@@ -69,8 +69,6 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
     key: 'questions',
     label: 'Ngân hàng câu hỏi',
     icon: Database,
-    badge: 'GDPT 2018',
-    badgeColor: 'bg-blue-100 text-blue-700',
     roles: ['teacher'],
     group: 'main',
   },
@@ -315,7 +313,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
               <div className="truncate">
                 <p className="font-semibold text-slate-700 truncate">EduTest Smart v2.0</p>
-                <p className="text-[10px] text-slate-400">Chuẩn GDPT 2018</p>
               </div>
             </div>
           ) : (

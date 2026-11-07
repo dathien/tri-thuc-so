@@ -56,7 +56,7 @@ export const ExamVaultView: React.FC<ExamVaultViewProps> = ({ exams, classes, on
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Lưu trữ, quản lý các kỳ kiểm tra 15 phút, 1 tiết, giữa kỳ và cuối kỳ theo chuẩn GDPT 2018.
+            Lưu trữ, quản lý các kỳ kiểm tra 15 phút, 1 tiết, giữa kỳ và cuối kỳ chuẩn hóa.
           </p>
         </div>
 

@@ -140,7 +140,7 @@ export const OnlineExamView: React.FC<OnlineExamViewProps> = ({
       answers,
       feedback:
         calculatedScore >= 8
-          ? 'Nắm rất vững kiến thức trọng tâm GDPT 2018!'
+          ? 'Nắm rất vững kiến thức trọng tâm môn học!'
           : 'Cần ôn tập kỹ hơn các công thức và dạng toán tương tự.',
     };
 

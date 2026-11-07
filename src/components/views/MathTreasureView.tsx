@@ -146,7 +146,7 @@ export const MathTreasureView: React.FC = () => {
             </h1>
             <span className="text-xs bg-amber-50 text-amber-700 font-bold px-2.5 py-0.5 rounded-full border border-amber-200 flex items-center gap-1">
               <Trophy className="w-3.5 h-3.5 text-amber-500" />
-              Cấp độ THPT GDPT 2018
+              Cấp độ THPT
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">

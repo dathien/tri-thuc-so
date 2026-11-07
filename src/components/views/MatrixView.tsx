@@ -162,7 +162,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
         totalPoints: 3.3,
       }));
     } else {
-      // Standard GDPT 2018 (40 - 35 - 20 - 5)
+      // Standard distribution ratio (40 - 35 - 20 - 5)
       updatedItems = [
         {
           chapter: 'Tính đơn điệu và cực trị hàm số',
@@ -232,9 +232,6 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
             <h1 className="text-lg sm:text-xl font-bold text-slate-900">
               Ma trận &amp; Bản đặc tả Đề kiểm tra
             </h1>
-            <span className="text-xs bg-indigo-50 text-indigo-700 font-semibold px-2.5 py-0.5 rounded-full border border-indigo-100">
-              Chuẩn GDPT 2018
-            </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
             Tự do tùy chỉnh 4 mức độ nhận thức (có thể đặt mức độ bất kỳ bằng 0), hệ thống tự động tính toán lại câu hỏi, điểm số và tỉ lệ phần trăm.
@@ -305,7 +302,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
             onClick={() => applyPresetRatio('standard')}
             className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-indigo-300 hover:text-indigo-600 font-semibold text-slate-700 transition-colors shadow-2xs"
           >
-            Chuẩn GDPT (40-35-20-5)
+            Mẫu chuẩn (40-35-20-5)
           </button>
           <button
             type="button"
@@ -464,7 +461,6 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
             <h3 className="font-bold text-xs uppercase tracking-wider text-slate-700">
               Hướng dẫn &amp; Nguyên tắc Khảo thí
             </h3>
-            <span className="text-[11px] text-slate-400">GDPT 2018 Môn Toán</span>
           </div>
 
           <div className="space-y-2.5 text-xs">

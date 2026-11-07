@@ -17,7 +17,7 @@ export const INITIAL_TEACHER: UserProfile = {
   email: 'dathien.toan@edutest.edu.vn',
   role: 'teacher',
   title: 'Giáo viên Toán THPT',
-  school: 'Trường THPT Chuyên GDPT 2018',
+  school: 'Trường THPT Chuyên',
   subject: 'Toán học (Lớp 10, 11, 12)',
 };
 
@@ -27,7 +27,7 @@ export const INITIAL_STUDENT: UserProfile = {
   email: 'an.nguyen12a1@edutest.edu.vn',
   role: 'student',
   title: 'Học sinh Lớp 12A1',
-  school: 'Trường THPT Chuyên GDPT 2018',
+  school: 'Trường THPT Chuyên',
   subject: 'Toán 12',
   classId: 'class-12a1',
 };
@@ -57,7 +57,7 @@ export const INITIAL_CLASSES: ClassRoom[] = [
   },
   {
     id: 'class-10a3',
-    name: 'Lớp 10A3 - Khám phá Toán học GDPT 2018',
+    name: 'Lớp 10A3 - Khám phá Toán học',
     grade: 10,
     schoolYear: '2025-2026',
     studentCount: 30,
@@ -287,7 +287,7 @@ export const INITIAL_QUESTIONS: Question[] = [
 export const INITIAL_MATRICES: ExamMatrix[] = [
   {
     id: 'mat-12-gki',
-    title: 'Ma trận Đề kiểm tra Giữa học kì 1 - Toán 12 (GDPT 2018)',
+    title: 'Ma trận Đề kiểm tra Giữa học kì 1 - Toán 12',
     grade: 12,
     examType: '45_min',
     durationMinutes: 45,
@@ -447,7 +447,7 @@ export const INITIAL_SUBMISSIONS: ExamSubmission[] = [
 ];
 
 /**
- * Math Lab 2D/3D Curriculum Mapping Table (GDPT 2018)
+ * Math Lab 2D/3D Curriculum Mapping Table
  * Explicitly fulfills Requirement 13:
  * "Phải có bảng đối chiếu danh mục bài học với Lab đã triển khai.
  *  Nội dung chưa hoàn thành phải được ghi rõ, không tạo thẻ giả hoặc tuyên bố đã bao phủ toàn bộ chương trình."
@@ -624,7 +624,7 @@ export const INITIAL_NOTIFICATIONS: NotificationItem[] = [
   },
   {
     id: 'notif-03',
-    title: 'Cập nhật ngân hàng đề GDPT 2018',
+    title: 'Cập nhật ngân hàng đề kiểm tra',
     message: 'Bộ câu hỏi chuẩn hóa chuyên đề Oxyz học kì 1 đã được bổ sung vào kho đề.',
     timestamp: '2 giờ trước',
     type: 'info',

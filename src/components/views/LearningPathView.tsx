@@ -146,7 +146,7 @@ export const LearningPathView: React.FC<LearningPathViewProps> = ({ onNavigate }
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-lg sm:text-xl font-bold text-slate-900">
-              Lộ trình Tự học Toán THPT Chuẩn GDPT 2018
+              Lộ trình Tự học Toán THPT
             </h1>
             <span className="text-xs bg-indigo-50 text-indigo-700 font-semibold px-2.5 py-0.5 rounded-full border border-indigo-100">
               Mục tiêu &amp; Đánh giá Năng lực
