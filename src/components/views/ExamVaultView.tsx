@@ -166,6 +166,19 @@ export const ExamVaultView: React.FC<ExamVaultViewProps> = ({ exams, classes, on
                       Bản nháp
                     </span>
                   )}
+                  {exam.proctoringEnabled && (
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                        exam.proctoringMode === 'strict_lock' || exam.proctoringConfig?.mode === 'strict_lock'
+                          ? 'bg-rose-50 text-rose-700 border-rose-200'
+                          : 'bg-blue-50 text-blue-700 border-blue-200'
+                      }`}
+                    >
+                      {exam.proctoringMode === 'strict_lock' || exam.proctoringConfig?.mode === 'strict_lock'
+                        ? 'Chế độ 1: Khóa tự động'
+                        : 'Chế độ 2: Chỉ giám sát'}
+                    </span>
+                  )}
                 </div>
                 <h3 className="font-bold text-sm text-slate-900 mt-2 leading-snug">{exam.title}</h3>
               </div>

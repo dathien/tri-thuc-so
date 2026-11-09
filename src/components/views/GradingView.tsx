@@ -7,9 +7,12 @@ import {
   FileSpreadsheet,
   TrendingUp,
   Award,
-  Clock,
   MessageSquare,
   X,
+  ShieldAlert,
+  Lock,
+  Unlock,
+  AlertTriangle,
 } from 'lucide-react';
 import { ExamSubmission, Exam } from '../../types';
 import { soundService } from '../../utils/audio';
@@ -240,6 +243,7 @@ export const GradingView: React.FC<GradingViewProps> = ({ submissions, exams }) 
                 <th className="px-4 py-3">Tên bài kiểm tra</th>
                 <th className="px-4 py-3 text-center">Điểm số</th>
                 <th className="px-4 py-3 text-center">Thời gian</th>
+                <th className="px-4 py-3">Chế độ Giám sát</th>
                 <th className="px-4 py-3">Ngày nộp</th>
                 <th className="px-4 py-3">Nhận xét của giáo viên</th>
                 <th className="px-4 py-3 text-right">Thao tác</th>
@@ -261,6 +265,27 @@ export const GradingView: React.FC<GradingViewProps> = ({ submissions, exams }) 
                   <td className="px-4 py-3 text-center font-mono tabular-nums text-slate-500">
                     {sub.durationSpentMinutes}p
                   </td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-col gap-1">
+                      <span
+                        className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold w-fit ${
+                          sub.proctoringMode === 'strict_lock'
+                            ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                            : 'bg-blue-50 text-blue-700 border border-blue-200'
+                        }`}
+                      >
+                        {sub.proctoringMode === 'strict_lock' ? 'Chống gian lận & Khóa' : 'Chỉ chống gian lận'}
+                      </span>
+                      {sub.tabViolationsCount > 0 ? (
+                        <span className="text-[10px] text-amber-700 font-semibold flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3 text-amber-600" />
+                          Rời màn hình {sub.tabViolationsCount} lần
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-emerald-600 font-medium">0 vi phạm</span>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-4 py-3 text-slate-400 font-mono text-[11px]">
                     {sub.submittedAt}
                   </td>
@@ -277,7 +302,7 @@ export const GradingView: React.FC<GradingViewProps> = ({ submissions, exams }) 
                       }}
                       className="px-2.5 py-1 rounded-lg text-indigo-600 hover:bg-indigo-50 font-semibold text-xs transition-colors"
                     >
-                      Nhận xét
+                      Chi tiết
                     </button>
                   </td>
                 </tr>
@@ -287,13 +312,13 @@ export const GradingView: React.FC<GradingViewProps> = ({ submissions, exams }) 
         </div>
       </div>
 
-      {/* Teacher Feedback Modal */}
+      {/* Teacher Feedback & Proctoring Modal */}
       {selectedSubmission && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-2xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 space-y-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-base text-slate-900">
-                Nhận xét bài làm: {selectedSubmission.studentName}
+                Chi tiết bài thi &amp; Nhận xét: {selectedSubmission.studentName}
               </h3>
               <button
                 type="button"
@@ -304,12 +329,45 @@ export const GradingView: React.FC<GradingViewProps> = ({ submissions, exams }) 
               </button>
             </div>
 
-            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs flex justify-between">
-              <span>
-                Điểm: <strong className="font-mono text-indigo-700 text-sm">{selectedSubmission.score}</strong>
-              </span>
-              <span>Thời gian làm: <strong>{selectedSubmission.durationSpentMinutes} phút</strong></span>
+            <div className="grid grid-cols-3 gap-2 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+              <div>
+                <span className="text-slate-400 block text-[10px]">Điểm số</span>
+                <span className="font-mono font-bold text-indigo-700 text-base">{selectedSubmission.score}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 block text-[10px]">Thời gian làm</span>
+                <span className="font-bold text-slate-800">{selectedSubmission.durationSpentMinutes} phút</span>
+              </div>
+              <div>
+                <span className="text-slate-400 block text-[10px]">Rời màn hình</span>
+                <span className={`font-bold font-mono ${selectedSubmission.tabViolationsCount > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
+                  {selectedSubmission.tabViolationsCount} lần
+                </span>
+              </div>
             </div>
+
+            {/* Proctoring Log in submission */}
+            {selectedSubmission.proctoringEvents && selectedSubmission.proctoringEvents.length > 0 && (
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
+                <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                  <ShieldAlert className="w-3.5 h-3.5 text-indigo-600" />
+                  Nhật ký Giám sát được lưu cùng bài thi:
+                </span>
+                <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                  {selectedSubmission.proctoringEvents.map((ev) => (
+                    <div
+                      key={ev.id}
+                      className="p-2 rounded-lg bg-white border border-slate-200 text-[11px] flex items-start justify-between gap-2"
+                    >
+                      <span className={ev.isViolation ? 'text-amber-800 font-medium' : 'text-slate-600'}>
+                        • {ev.description}
+                      </span>
+                      <span className="font-mono text-[10px] text-slate-400 shrink-0">{ev.timestamp}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <form onSubmit={handleSaveComment} className="space-y-4 text-xs">
               <div>

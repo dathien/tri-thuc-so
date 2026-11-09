@@ -99,6 +99,39 @@ export interface ExamMatrix {
   };
 }
 
+export type ProctoringMode = 'strict_lock' | 'monitor_only';
+
+export interface ProctoringConfig {
+  mode: ProctoringMode;
+  lockThreshold: 1 | 2 | 3;
+  unlockPin?: string;
+  continueTimerOnLock: boolean;
+  detectTabSwitch: boolean;
+  detectFullscreenExit: boolean;
+  detectFocusLoss: boolean;
+}
+
+export interface ProctoringEvent {
+  id: string;
+  examId: string;
+  studentId: string;
+  studentName: string;
+  timestamp: string;
+  eventType:
+    | 'tab_switch'
+    | 'fullscreen_exit'
+    | 'focus_loss'
+    | 'network_disconnect'
+    | 'network_reconnect'
+    | 'exam_locked'
+    | 'exam_unlocked_remote'
+    | 'exam_unlocked_pin';
+  isViolation: boolean;
+  description: string;
+  severity: 'info' | 'warning' | 'danger';
+  performedBy?: string;
+}
+
 export interface Exam {
   id: string;
   code: string;
@@ -113,6 +146,8 @@ export interface Exam {
   status: 'draft' | 'published' | 'closed';
   allowReview: boolean;
   proctoringEnabled: boolean;
+  proctoringMode?: ProctoringMode;
+  proctoringConfig?: ProctoringConfig;
   startDate?: string;
   endDate?: string;
   createdAt: string;
@@ -132,6 +167,12 @@ export interface ExamSubmission {
   submittedAt: string;
   status: 'submitted' | 'graded';
   tabViolationsCount: number;
+  isLocked?: boolean;
+  lockReason?: string;
+  lockedAt?: string;
+  proctoringMode?: ProctoringMode;
+  unlockHistory?: { unlockedAt: string; unlockedBy: string; method: 'pin' | 'remote' }[];
+  proctoringEvents?: ProctoringEvent[];
   answers: Record<string, any>;
   feedback?: string;
 }

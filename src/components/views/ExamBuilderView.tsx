@@ -15,10 +15,16 @@ import {
   ShieldCheck,
   Sliders,
   Filter,
+  Lock,
+  Unlock,
+  Key,
+  EyeOff,
+  RefreshCw,
 } from 'lucide-react';
-import { Question, Exam, ClassRoom, CognitiveLevel } from '../../types';
+import { Question, Exam, ClassRoom, CognitiveLevel, ProctoringMode, ProctoringConfig } from '../../types';
 import MathRenderer from '../MathRenderer';
 import { soundService } from '../../utils/audio';
+import { proctoringService } from '../../services/proctoringService';
 
 interface ExamBuilderViewProps {
   questions: Question[];
@@ -74,7 +80,17 @@ export const ExamBuilderView: React.FC<ExamBuilderViewProps> = ({
   const [targetTotalPoints, setTargetTotalPoints] = useState(10);
   const [selectedClassIds, setSelectedClassIds] = useState<string[]>([classes[0]?.id || '']);
   const [proctoringEnabled, setProctoringEnabled] = useState(true);
+  const [proctoringMode, setProctoringMode] = useState<ProctoringMode>('strict_lock');
+  const [lockThreshold, setLockThreshold] = useState<1 | 2 | 3>(2);
+  const [unlockPin, setUnlockPin] = useState<string>('689254');
+  const [showPin, setShowPin] = useState<boolean>(false);
   const [allowReview, setAllowReview] = useState(true);
+
+  const generateRandomPin = () => {
+    const pin = Math.floor(100000 + Math.random() * 900000).toString();
+    setUnlockPin(pin);
+    soundService.playClick();
+  };
 
   // 4 Cognitive Levels Quota Configuration (Saved to localStorage)
   const [cognitiveConfig, setCognitiveConfig] = useState(() => {
@@ -219,6 +235,16 @@ export const ExamBuilderView: React.FC<ExamBuilderViewProps> = ({
   const handlePublish = (status: 'draft' | 'published') => {
     if (!title.trim() || selectedQuestionIds.length === 0) return;
 
+    const proctoringConfig: ProctoringConfig = {
+      mode: proctoringMode,
+      lockThreshold,
+      unlockPin,
+      continueTimerOnLock: true,
+      detectTabSwitch: true,
+      detectFullscreenExit: true,
+      detectFocusLoss: true,
+    };
+
     onSaveExam({
       code,
       title,
@@ -232,8 +258,12 @@ export const ExamBuilderView: React.FC<ExamBuilderViewProps> = ({
       status,
       allowReview,
       proctoringEnabled,
+      proctoringMode,
+      proctoringConfig,
       startDate: new Date().toISOString().slice(0, 10),
     });
+
+    proctoringService.saveExamConfig(code, proctoringConfig);
 
     soundService.playSuccess();
     onNavigateToVault();
@@ -541,28 +571,184 @@ export const ExamBuilderView: React.FC<ExamBuilderViewProps> = ({
             </div>
           </div>
 
-          {/* Security & Options */}
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3 text-xs">
-            <h3 className="font-bold text-slate-800">Cấu hình Giám sát &amp; Xem lại bài</h3>
-            <div className="flex flex-wrap gap-4">
-              <label className="flex items-center gap-2 cursor-pointer">
+          {/* Chế độ Giám sát bài thi */}
+          <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4 text-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4 text-indigo-600" />
+                <h3 className="font-bold text-xs uppercase tracking-wider text-slate-900">
+                  Chế độ Giám sát bài thi &amp; Chống gian lận
+                </h3>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer self-start sm:self-auto">
                 <input
                   type="checkbox"
                   checked={proctoringEnabled}
                   onChange={(e) => setProctoringEnabled(e.target.checked)}
-                  className="rounded text-indigo-600"
+                  className="rounded text-indigo-600 accent-indigo-600"
                 />
-                <span className="font-medium text-slate-700">
-                  Bật giám sát trực tuyến (cảnh báo chuyển tab, nhật ký hành vi)
+                <span className="font-bold text-slate-800">
+                  {proctoringEnabled ? 'Đang kích hoạt giám sát' : 'Tắt giám sát ca thi'}
                 </span>
               </label>
+            </div>
 
+            {proctoringEnabled ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                  {/* Chế độ 1: Chống gian lận và khóa bài thi */}
+                  <div
+                    onClick={() => {
+                      setProctoringMode('strict_lock');
+                      soundService.playClick();
+                    }}
+                    className={`p-4 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between space-y-3 ${
+                      proctoringMode === 'strict_lock'
+                        ? 'bg-rose-50/60 border-rose-500 shadow-xs ring-2 ring-rose-200'
+                        : 'bg-white border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-1.5">
+                        <span className="flex items-center gap-1.5 font-bold text-slate-900 text-sm">
+                          <Lock className="w-4 h-4 text-rose-600" />
+                          <span>Chế độ 1: Chống gian lận và khóa bài thi</span>
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">
+                          Khóa tự động
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-600 leading-relaxed">
+                        Phát hiện chuyển tab, mất tiêu điểm, thoát toàn màn hình. Khi đạt ngưỡng vi phạm cấu hình, hệ thống tự động lưu bài làm và khóa màn hình thi.
+                      </p>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-100 space-y-1 text-[11px] text-slate-500">
+                      <p>• Phân biệt sự cố kỹ thuật (mất mạng/reconnect không bị tính vi phạm).</p>
+                      <p>• Đồng hồ tiếp tục đếm ngược theo thời gian thực máy chủ khi bị khóa.</p>
+                      <p>• Giáo viên có thể mở khóa từ xa hoặc cấp mã PIN bảo mật.</p>
+                    </div>
+                  </div>
+
+                  {/* Chế độ 2: Chỉ chống gian lận */}
+                  <div
+                    onClick={() => {
+                      setProctoringMode('monitor_only');
+                      soundService.playClick();
+                    }}
+                    className={`p-4 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between space-y-3 ${
+                      proctoringMode === 'monitor_only'
+                        ? 'bg-blue-50/60 border-blue-500 shadow-xs ring-2 ring-blue-200'
+                        : 'bg-white border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-1.5">
+                        <span className="flex items-center gap-1.5 font-bold text-slate-900 text-sm">
+                          <ShieldCheck className="w-4 h-4 text-blue-600" />
+                          <span>Chế độ 2: Chỉ chống gian lận</span>
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">
+                          Ghi nhật ký &amp; Cảnh báo
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-600 leading-relaxed">
+                        Theo dõi và ghi nhận đầy đủ sự kiện tương tự. Hiển thị cảnh báo trực tiếp cho học sinh nhưng không khóa bài thi, không yêu cầu mã PIN.
+                      </p>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-100 space-y-1 text-[11px] text-slate-500">
+                      <p>• Học sinh nhận thông báo vi phạm và tiếp tục làm bài không gián đoạn.</p>
+                      <p>• Toàn bộ nhật ký và số lần vi phạm được tổng hợp gửi giáo viên.</p>
+                      <p>• Phù hợp với các bài ôn tập định kỳ hoặc kiểm tra nhanh 15 phút.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Detailed Parameters for Mode 1 */}
+                {proctoringMode === 'strict_lock' && (
+                  <div className="p-3.5 rounded-xl bg-white border border-rose-200 space-y-3 animate-in fade-in">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <span className="font-bold text-slate-800 block text-xs">
+                          Ngưỡng vi phạm kích hoạt khóa bài thi:
+                        </span>
+                        <span className="text-[11px] text-slate-500">
+                          Học sinh sẽ bị khóa bài thi ngay khi số lần rời màn hình đạt ngưỡng này
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {([1, 2, 3] as const).map((t) => (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => setLockThreshold(t)}
+                            className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-all ${
+                              lockThreshold === t
+                                ? 'bg-rose-600 text-white shadow-2xs'
+                                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                            }`}
+                          >
+                            {t} lần vi phạm
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* PIN Config */}
+                    <div className="pt-2.5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <span className="font-bold text-slate-800 block text-xs">
+                          Mã PIN xác thực mở khóa ca thi (Phía giáo viên):
+                        </span>
+                        <span className="text-[11px] text-slate-500">
+                          Dùng để mở khóa trực tiếp tại chỗ cho học sinh hoặc mở khóa từ xa
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="relative">
+                          <input
+                            type={showPin ? 'text' : 'password'}
+                            value={unlockPin}
+                            onChange={(e) => setUnlockPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                            maxLength={6}
+                            className="w-28 px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-center font-mono font-bold tracking-widest text-slate-900 focus:bg-white focus:outline-none"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowPin(!showPin)}
+                          className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-100"
+                          title={showPin ? 'Ẩn mã PIN' : 'Hiện mã PIN'}
+                        >
+                          {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={generateRandomPin}
+                          className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs flex items-center gap-1"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" />
+                          <span>Sinh mã mới</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-slate-500 text-xs italic">
+                Ca thi đang ở chế độ làm bài tự do, không giám sát hành vi chuyển tab hoặc toàn màn hình.
+              </p>
+            )}
+
+            <div className="pt-2 border-t border-slate-200 flex flex-wrap gap-4">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={allowReview}
                   onChange={(e) => setAllowReview(e.target.checked)}
-                  className="rounded text-indigo-600"
+                  className="rounded text-indigo-600 accent-indigo-600"
                 />
                 <span className="font-medium text-slate-700">
                   Cho phép học sinh xem đáp án chi tiết sau khi nộp bài
