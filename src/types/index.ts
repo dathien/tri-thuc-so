@@ -3,6 +3,9 @@
  * Chuẩn chương trình Giáo dục Phổ thông 2018 - Môn Toán THPT
  */
 
+import { MathGraphicConfig } from './mathGraphics';
+export * from './mathGraphics';
+
 export type UserRole = 'teacher' | 'student';
 
 export interface UserProfile {
@@ -73,6 +76,7 @@ export interface Question {
   explanation?: string;
   points: number;
   part?: 1 | 2 | 3;
+  graphics?: MathGraphicConfig;
   createdAt: string;
 }
 

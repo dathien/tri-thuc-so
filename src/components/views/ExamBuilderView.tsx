@@ -49,6 +49,7 @@ import {
   ExamGradingRulePart2,
 } from '../../types';
 import MathRenderer from '../MathRenderer';
+import MathGraphicDisplay from '../math-graphics/MathGraphicDisplay';
 import { soundService } from '../../utils/audio';
 import { proctoringService } from '../../services/proctoringService';
 import { docxExportService, DocxTemplateType } from '../../services/docxExportService';
@@ -1286,6 +1287,11 @@ export const ExamBuilderView: React.FC<ExamBuilderViewProps> = ({
                       <div className="text-slate-900 font-medium leading-relaxed">
                         <MathRenderer content={q.content} />
                       </div>
+                      {q.graphics && (
+                        <div className="pt-2 pb-1 flex justify-center">
+                          <MathGraphicDisplay config={q.graphics} width={340} height={200} showCaption />
+                        </div>
+                      )}
                       <div className="grid grid-cols-2 gap-2 pt-1 text-[11px]">
                         {(q.options || []).map((opt, i) => {
                           const letter = String.fromCharCode(65 + i);
@@ -1337,6 +1343,11 @@ export const ExamBuilderView: React.FC<ExamBuilderViewProps> = ({
                       <div className="text-slate-900 font-medium leading-relaxed">
                         <MathRenderer content={q.content} />
                       </div>
+                      {q.graphics && (
+                        <div className="pt-2 pb-1 flex justify-center">
+                          <MathGraphicDisplay config={q.graphics} width={340} height={200} showCaption />
+                        </div>
+                      )}
                       <div className="space-y-1.5 pt-1 pl-2 text-[11px]">
                         {(q.subItems || []).map((sub) => (
                           <div key={sub.id} className="p-2 rounded-lg bg-white border border-slate-200 flex items-center justify-between">
@@ -1386,6 +1397,11 @@ export const ExamBuilderView: React.FC<ExamBuilderViewProps> = ({
                       <div className="text-slate-900 font-medium leading-relaxed">
                         <MathRenderer content={q.content} />
                       </div>
+                      {q.graphics && (
+                        <div className="pt-2 pb-1 flex justify-center">
+                          <MathGraphicDisplay config={q.graphics} width={340} height={200} showCaption />
+                        </div>
+                      )}
                       <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-between text-[11px]">
                         <span className="font-bold text-emerald-900">Đáp số chuẩn: {String(q.correctAnswer)}</span>
                         {q.acceptableAnswers && (
@@ -1655,6 +1671,11 @@ export const ExamBuilderView: React.FC<ExamBuilderViewProps> = ({
                       <strong>Câu {idx + 1}: </strong>
                       <MathRenderer content={q.content} inline />
                     </p>
+                    {q.graphics && (
+                      <div className="pt-2 pb-1 flex justify-center">
+                        <MathGraphicDisplay config={q.graphics} width={340} height={200} showCaption />
+                      </div>
+                    )}
                     <div className="grid grid-cols-2 gap-2 pl-4 pt-1">
                       {(q.options || []).map((opt, i) => (
                         <div key={i} className="flex items-center gap-1.5 text-slate-700">

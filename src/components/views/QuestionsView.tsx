@@ -13,9 +13,13 @@ import {
   Trash2,
   Sparkles,
   Layers,
+  Image as ImageIcon,
+  Edit2,
 } from 'lucide-react';
-import { Question, CognitiveLevel, QuestionType } from '../../types';
+import { Question, CognitiveLevel, QuestionType, MathGraphicConfig } from '../../types';
 import MathRenderer from '../MathRenderer';
+import MathGraphicDisplay from '../math-graphics/MathGraphicDisplay';
+import MathGraphicsPicker from '../math-graphics/MathGraphicsPicker';
 import { soundService } from '../../utils/audio';
 
 interface QuestionsViewProps {
@@ -50,6 +54,12 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
   const [selectedType, setSelectedType] = useState<'all' | QuestionType>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
+
+  // Graphics Picker modal states
+  const [showGraphicsPicker, setShowGraphicsPicker] = useState(false);
+  const [activeGraphicForPicker, setActiveGraphicForPicker] = useState<MathGraphicConfig | null>(null);
+  const [editingTargetQuestion, setEditingTargetQuestion] = useState<Question | null>(null);
+  const [newGraphic, setNewGraphic] = useState<MathGraphicConfig | null>(null);
 
   // New question form state
   const [newGrade, setNewGrade] = useState<10 | 11 | 12>(12);
@@ -103,6 +113,7 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
       correctAnswer: newCorrectAnswer,
       explanation: newExplanation,
       points: 0.25,
+      graphics: newGraphic || undefined,
     });
 
     setNewContent('');
@@ -111,8 +122,37 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
     setNewOptionC('');
     setNewOptionD('');
     setNewExplanation('');
+    setNewGraphic(null);
     setShowAddModal(false);
     soundService.playSuccess();
+  };
+
+  const handleOpenPickerForNew = () => {
+    setEditingTargetQuestion(null);
+    setActiveGraphicForPicker(newGraphic);
+    setShowGraphicsPicker(true);
+  };
+
+  const handleOpenPickerForQuestion = (q: Question) => {
+    setEditingTargetQuestion(q);
+    setActiveGraphicForPicker(q.graphics || null);
+    setShowGraphicsPicker(true);
+  };
+
+  const handleSaveGraphicFromPicker = (config: MathGraphicConfig) => {
+    if (editingTargetQuestion && onUpdateQuestion) {
+      onUpdateQuestion({ ...editingTargetQuestion, graphics: config });
+      setEditingTargetQuestion(null);
+    } else {
+      setNewGraphic(config);
+    }
+  };
+
+  const handleRemoveGraphicForQuestion = (q: Question) => {
+    if (onUpdateQuestion) {
+      onUpdateQuestion({ ...q, graphics: undefined });
+      soundService.playClick();
+    }
   };
 
   const handleQuickChangeLevel = (question: Question, newLvl: CognitiveLevel) => {
@@ -389,6 +429,33 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
                     <span className="text-xs font-mono font-bold text-slate-500">
                       {q.points} điểm
                     </span>
+
+                    {/* Graphic Attachment Button */}
+                    <button
+                      type="button"
+                      onClick={() => handleOpenPickerForQuestion(q)}
+                      className={`px-2 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1 transition-all border ${
+                        q.graphics
+                          ? 'bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100'
+                          : 'bg-white border-slate-200 text-slate-600 hover:text-indigo-600 hover:bg-slate-50'
+                      }`}
+                      title={q.graphics ? 'Chỉnh sửa hình học / đồ thị của câu hỏi' : 'Chèn hình học / đồ thị vào câu hỏi'}
+                    >
+                      <ImageIcon className="w-3.5 h-3.5 text-indigo-500" />
+                      <span>{q.graphics ? 'Sửa hình 2D/3D' : '+ Hình vẽ'}</span>
+                    </button>
+
+                    {q.graphics && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveGraphicForQuestion(q)}
+                        className="p-1 text-slate-300 hover:text-rose-500 transition-colors"
+                        title="Gỡ hình vẽ khỏi câu hỏi"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+
                     <button
                       type="button"
                       onClick={() => {
@@ -412,6 +479,19 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
                     <MathRenderer content={q.content} />
                   </div>
                 </div>
+
+                {/* Math Graphic Display if attached */}
+                {q.graphics && (
+                  <div className="pt-2 pb-1 flex flex-col items-center">
+                    <MathGraphicDisplay
+                      config={q.graphics}
+                      width={440}
+                      height={270}
+                      showCaption
+                      allowDownload
+                    />
+                  </div>
+                )}
 
                 {/* Multiple Choice Options */}
                 {q.questionType === 'multiple_choice' && q.options && q.options.length > 0 && (
@@ -589,6 +669,52 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
                 )}
               </div>
 
+              {/* Graphic Attachment in Modal */}
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+                    <ImageIcon className="w-4 h-4 text-indigo-600" />
+                    <span>Hình vẽ hình học / Đồ thị 2D/3D đính kèm:</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleOpenPickerForNew}
+                    className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors"
+                  >
+                    <Layers className="w-3.5 h-3.5" />
+                    <span>{newGraphic ? 'Thay đổi hình vẽ' : 'Chèn hình học / Đồ thị'}</span>
+                  </button>
+                </div>
+
+                {newGraphic ? (
+                  <div className="flex flex-col items-center p-2 bg-white rounded-xl border border-slate-200">
+                    <MathGraphicDisplay config={newGraphic} width={360} height={220} showCaption />
+                    <div className="flex items-center gap-2 mt-2">
+                      <button
+                        type="button"
+                        onClick={handleOpenPickerForNew}
+                        className="px-2.5 py-1 rounded-lg border border-slate-200 text-slate-600 hover:text-indigo-600 hover:bg-slate-50 text-[11px] font-semibold flex items-center gap-1"
+                      >
+                        <Edit2 className="w-3 h-3" />
+                        Chỉnh sửa tham số
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNewGraphic(null)}
+                        className="px-2.5 py-1 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 text-[11px] font-semibold flex items-center gap-1"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        Xóa hình
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-slate-500 italic">
+                    Chưa đính kèm hình vẽ. Bấm nút "Chèn hình học / Đồ thị" để lấy mô hình từ Phòng Lab (Khảo sát đồ thị, Oxyz, Lượng giác, Conic, Hình chóp 3D,...).
+                  </p>
+                )}
+              </div>
+
               {/* Options Inputs */}
               <div className="space-y-2">
                 <label className="block font-semibold text-slate-700">
@@ -684,6 +810,19 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
             </form>
           </div>
         </div>
+      )}
+
+      {/* Shared Math Graphics Picker Modal */}
+      {showGraphicsPicker && (
+        <MathGraphicsPicker
+          isOpen={showGraphicsPicker}
+          initialConfig={activeGraphicForPicker}
+          onClose={() => {
+            setShowGraphicsPicker(false);
+            setEditingTargetQuestion(null);
+          }}
+          onSelect={handleSaveGraphicFromPicker}
+        />
       )}
     </div>
   );
