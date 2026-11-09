@@ -10,6 +10,11 @@ import {
   NotificationItem,
   ActivityLog,
 } from '../types';
+import {
+  BENCHMARK_EXAM_QUESTIONS,
+  BENCHMARK_EXAM_BUNDLE,
+  BENCHMARK_MATRIX_ITEMS,
+} from './mockExamDataset';
 
 export const INITIAL_TEACHER: UserProfile = {
   id: 'teacher-01',
@@ -282,9 +287,32 @@ export const INITIAL_QUESTIONS: Question[] = [
     points: 0.25,
     createdAt: '2026-01-05',
   },
+  ...BENCHMARK_EXAM_QUESTIONS,
 ];
 
 export const INITIAL_MATRICES: ExamMatrix[] = [
+  {
+    id: 'mat-12-benchmark-90m',
+    title: 'Ma trận Đề kiểm tra Cuối học kì 1 (Chuẩn 90 phút) - Toán 12',
+    grade: 12,
+    examType: 'final',
+    durationMinutes: 90,
+    totalQuestions: 22,
+    totalPoints: 10,
+    items: BENCHMARK_MATRIX_ITEMS,
+    formatRatio: {
+      multipleChoice: 30,
+      trueFalse: 40,
+      shortAnswer: 30,
+      essay: 0,
+    },
+    cognitiveRatio: {
+      recognition: 40,
+      comprehension: 30,
+      application: 20,
+      highApplication: 10,
+    },
+  },
   {
     id: 'mat-12-gki',
     title: 'Ma trận Đề kiểm tra Giữa học kì 1 - Toán 12',
@@ -341,6 +369,27 @@ export const INITIAL_MATRICES: ExamMatrix[] = [
 ];
 
 export const INITIAL_EXAMS: Exam[] = [
+  {
+    id: 'exam-12-benchmark-90m',
+    code: BENCHMARK_EXAM_BUNDLE.code,
+    title: BENCHMARK_EXAM_BUNDLE.title,
+    grade: 12,
+    semester: 1,
+    durationMinutes: 90,
+    totalPoints: 10,
+    questionsCount: 22,
+    questionIds: BENCHMARK_EXAM_QUESTIONS.map((q) => q.id),
+    assignedClassIds: ['class-12a1'],
+    status: 'published',
+    allowReview: true,
+    proctoringEnabled: true,
+    proctoringMode: 'strict_lock',
+    proctoringConfig: BENCHMARK_EXAM_BUNDLE.proctoringConfig,
+    bundle: BENCHMARK_EXAM_BUNDLE,
+    startDate: '2026-02-01',
+    endDate: '2026-02-28',
+    createdAt: '2026-02-01',
+  },
   {
     id: 'exam-12-01',
     code: 'DE-TOAN12-GKI-01',

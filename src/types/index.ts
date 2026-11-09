@@ -47,6 +47,14 @@ export type CognitiveLevel = 'recognition' | 'comprehension' | 'application' | '
 
 export type QuestionType = 'multiple_choice' | 'true_false' | 'short_answer' | 'essay';
 
+export interface QuestionSubItem {
+  id: string;
+  label: 'a' | 'b' | 'c' | 'd';
+  content: string;
+  isCorrect: boolean;
+  explanation?: string;
+}
+
 export interface Question {
   id: string;
   code: string;
@@ -58,20 +66,27 @@ export interface Question {
   cognitiveLevel: CognitiveLevel;
   questionType: QuestionType;
   content: string; // supports KaTeX equations
-  options?: string[]; // for multiple_choice & true_false
+  options?: string[]; // for multiple_choice (A, B, C, D)
+  subItems?: QuestionSubItem[]; // for true_false (a, b, c, d)
   correctAnswer: string | boolean[] | number | string[];
+  acceptableAnswers?: string[]; // for short_answer numerical / expression equivalence
   explanation?: string;
   points: number;
+  part?: 1 | 2 | 3;
   createdAt: string;
 }
 
 export interface MatrixItem {
   chapter: string;
   topic: string;
+  learningObjective?: string;
   recognition: number;
   comprehension: number;
   application: number;
   highApplication: number;
+  part1Count?: number; // Trắc nghiệm nhiều lựa chọn
+  part2Count?: number; // Đúng / Sai
+  part3Count?: number; // Trả lời ngắn
   totalQuestions: number;
   totalPoints: number;
 }
@@ -97,6 +112,103 @@ export interface ExamMatrix {
     application: number;
     highApplication: number;
   };
+}
+
+export type ExamGradingRulePart2 = 'official_moet' | 'equal_split';
+
+export interface ExamPartConfig {
+  enabled: boolean;
+  title: string;
+  description: string;
+  questionCount: number;
+  pointsPerQuestion: number;
+  totalPoints: number;
+}
+
+export interface ExamStructureConfig {
+  grade: 10 | 11 | 12;
+  semester: 1 | 2;
+  examType: '15_min' | '45_min' | 'midterm' | 'final' | 'national_mock';
+  durationMinutes: number;
+  totalPoints: number;
+  gradingRulePart2: ExamGradingRulePart2;
+  part1: ExamPartConfig;
+  part2: {
+    enabled: boolean;
+    title: string;
+    description: string;
+    questionCount: number;
+    subItemsPerQuestion: number;
+    maxPointsPerQuestion: number;
+    totalPoints: number;
+  };
+  part3: ExamPartConfig;
+  cognitiveRatio: {
+    recognition: number;
+    comprehension: number;
+    application: number;
+    highApplication: number;
+  };
+}
+
+export interface SpecificationItem {
+  id: string;
+  order: number;
+  chapter: string;
+  lesson?: string;
+  topic: string;
+  learningObjective: string;
+  part: 1 | 2 | 3;
+  questionType: QuestionType;
+  cognitiveLevel: CognitiveLevel;
+  questionNumber: number;
+  subItemCount?: number;
+  points: number;
+  matchedQuestionId?: string;
+  matchedQuestionCode?: string;
+}
+
+export interface ExamVariant {
+  code: string; // Mã đề: 101, 102, 103, 104
+  questionIds: string[];
+  orderMap: { originalId: string; newNumber: number; shuffledOptions?: number[] }[];
+  answerKeyPart1: Record<number, string>;
+  answerKeyPart2: Record<number, Record<'a' | 'b' | 'c' | 'd', boolean>>;
+  answerKeyPart3: Record<number, string>;
+}
+
+export interface ExamBundle {
+  id: string;
+  code: string;
+  title: string;
+  schoolName: string;
+  academicYear: string;
+  grade: 10 | 11 | 12;
+  semester: 1 | 2;
+  subject: string;
+  durationMinutes: number;
+  totalPoints: number;
+  status: 'draft' | 'approved' | 'published' | 'archived';
+  structure: ExamStructureConfig;
+  matrixItems: MatrixItem[];
+  specifications: SpecificationItem[];
+  questions: Question[];
+  variants: ExamVariant[];
+  masterAnswerKey: {
+    part1: { questionNumber: number; answer: string; points: number }[];
+    part2: { questionNumber: number; subItems: { label: 'a' | 'b' | 'c' | 'd'; isCorrect: boolean }[]; maxPoints: number }[];
+    part3: { questionNumber: number; answer: string; acceptableAnswers?: string[]; points: number }[];
+  };
+  gradingGuide: {
+    part1Guide: string;
+    part2Guide: string;
+    part3Guide: string;
+    solutions: { questionNumber: number; part: number; content: string; solution: string; points: number }[];
+  };
+  proctoringConfig?: ProctoringConfig;
+  assignedClassIds: string[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type ProctoringMode = 'strict_lock' | 'monitor_only';
@@ -148,6 +260,7 @@ export interface Exam {
   proctoringEnabled: boolean;
   proctoringMode?: ProctoringMode;
   proctoringConfig?: ProctoringConfig;
+  bundle?: ExamBundle;
   startDate?: string;
   endDate?: string;
   createdAt: string;

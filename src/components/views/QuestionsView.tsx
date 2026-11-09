@@ -414,7 +414,7 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
                 </div>
 
                 {/* Multiple Choice Options */}
-                {q.options && q.options.length > 0 && (
+                {q.questionType === 'multiple_choice' && q.options && q.options.length > 0 && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs">
                     {q.options.map((opt, optIdx) => {
                       const letter = String.fromCharCode(65 + optIdx);
@@ -446,6 +446,44 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
                         </div>
                       );
                     })}
+                  </div>
+                )}
+
+                {/* True / False Sub-items */}
+                {q.questionType === 'true_false' && q.subItems && q.subItems.length > 0 && (
+                  <div className="space-y-1.5 pt-1 text-xs">
+                    {q.subItems.map((sub) => (
+                      <div
+                        key={sub.id}
+                        className="p-2 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-slate-700">{sub.label})</span>
+                          <MathRenderer content={sub.content} inline />
+                        </div>
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            sub.isCorrect ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                          }`}
+                        >
+                          {sub.isCorrect ? 'ĐÚNG' : 'SAI'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Short Answer Display */}
+                {q.questionType === 'short_answer' && (
+                  <div className="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200 text-xs flex items-center justify-between">
+                    <span className="font-bold text-emerald-900">
+                      Đáp án số: <span className="font-mono text-sm">{String(q.correctAnswer)}</span>
+                    </span>
+                    {q.acceptableAnswers && q.acceptableAnswers.length > 0 && (
+                      <span className="text-[11px] text-slate-500">
+                        Chấp nhận: {q.acceptableAnswers.join(', ')}
+                      </span>
+                    )}
                   </div>
                 )}
 
