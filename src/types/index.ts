@@ -151,7 +151,9 @@ export interface MathLabModule {
   objectives: string[];
   isImplemented: boolean;
   badgeText: string;
+  lessonCode?: string;
   testStatus?: 'tested' | 'in_progress' | 'planned';
+  testResult?: 'pass' | 'pending';
 }
 
 export interface NotificationItem {
