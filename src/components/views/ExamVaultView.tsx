@@ -19,20 +19,28 @@ import {
   Lock,
   X,
   GraduationCap,
+  Edit3,
+  History,
+  AlertTriangle,
 } from 'lucide-react';
-import { Exam, ClassRoom, ExamBundle } from '../../types';
+import { Exam, ClassRoom, ExamBundle, ExamVersionRecord, CorrectionLogItem } from '../../types';
 import { SectionKey } from '../Sidebar';
 import { soundService } from '../../utils/audio';
 import { docxExportService } from '../../services/docxExportService';
 import { pdfExportService } from '../../services/pdfExportService';
 import { BENCHMARK_EXAM_BUNDLE } from '../../data/mockExamDataset';
 import MathRenderer from '../MathRenderer';
+import { ExamVersionHistoryModal } from '../exam-editor/ExamVersionHistoryModal';
+import { ExamCorrectionModal } from '../exam-editor/ExamCorrectionModal';
 
 interface ExamVaultViewProps {
   exams: Exam[];
   classes: ClassRoom[];
   onNavigate: (section: SectionKey) => void;
   onDuplicateExam?: (exam: Exam) => void;
+  onEditExam?: (exam: Exam) => void;
+  onUpdateExam?: (updatedExam: Exam) => void;
+  authorName?: string;
 }
 
 export const ExamVaultView: React.FC<ExamVaultViewProps> = ({
@@ -40,6 +48,9 @@ export const ExamVaultView: React.FC<ExamVaultViewProps> = ({
   classes,
   onNavigate,
   onDuplicateExam,
+  onEditExam,
+  onUpdateExam,
+  authorName = 'Thầy Hồ Nguyễn Đa Thiện',
 }) => {
   const [selectedGrade, setSelectedGrade] = useState<'all' | 10 | 11 | 12>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all');
@@ -47,6 +58,8 @@ export const ExamVaultView: React.FC<ExamVaultViewProps> = ({
   const [previewExam, setPreviewExam] = useState<Exam | null>(null);
   const [activeTab, setActiveTab] = useState<'paper' | 'matrix' | 'spec' | 'key'>('paper');
   const [actionNotice, setActionNotice] = useState<string | null>(null);
+  const [historyModalExam, setHistoryModalExam] = useState<Exam | null>(null);
+  const [correctionModalExam, setCorrectionModalExam] = useState<Exam | null>(null);
 
   const filteredExams = exams.filter((e) => {
     const matchGrade = selectedGrade === 'all' ? true : e.grade === selectedGrade;
@@ -271,7 +284,7 @@ export const ExamVaultView: React.FC<ExamVaultViewProps> = ({
 
               {/* Action Buttons */}
               <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   <button
                     type="button"
                     onClick={() => {
@@ -288,9 +301,49 @@ export const ExamVaultView: React.FC<ExamVaultViewProps> = ({
                     type="button"
                     onClick={() => {
                       soundService.playClick();
+                      if (onEditExam) onEditExam(exam);
+                    }}
+                    className="px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition-colors flex items-center gap-1 border border-indigo-200"
+                    title="Chỉnh sửa toàn bộ đề, ma trận, câu hỏi và đáp án"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    Chỉnh sửa đề
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundService.playClick();
+                      setHistoryModalExam(exam);
+                    }}
+                    className="p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 border border-slate-200"
+                    title="Xem lịch sử các phiên bản & Rollback"
+                  >
+                    <History className="w-4 h-4 text-slate-600" />
+                  </button>
+
+                  {isPublished && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        soundService.playClick();
+                        setCorrectionModalExam(exam);
+                      }}
+                      className="px-2 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-bold transition-colors flex items-center gap-1 border border-amber-200"
+                      title="Đính chính khóa đáp án mà không xóa bài làm học sinh"
+                    >
+                      <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                      Đính chính
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundService.playClick();
                       onNavigate('online-exam');
                     }}
-                    className="px-2.5 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-bold transition-colors"
+                    className="px-2.5 py-1.5 rounded-lg bg-slate-50 text-slate-700 hover:bg-slate-100 text-xs font-bold transition-colors border border-slate-200"
                   >
                     Làm bài thử
                   </button>
@@ -552,11 +605,24 @@ export const ExamVaultView: React.FC<ExamVaultViewProps> = ({
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-slate-100 flex items-center justify-between gap-3 shrink-0 bg-slate-50 rounded-b-3xl">
+            <div className="p-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 shrink-0 bg-slate-50 rounded-b-3xl">
               <span className="text-slate-500 text-xs">
                 Hồ sơ đề thi được lưu trữ an toàn trong EduTest Smart.
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundService.playClick();
+                    const ex = previewExam;
+                    setPreviewExam(null);
+                    if (onEditExam) onEditExam(ex);
+                  }}
+                  className="px-3.5 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 font-bold text-xs flex items-center gap-1.5"
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                  Chỉnh sửa đề thi này
+                </button>
                 <button
                   type="button"
                   onClick={() => handleExportDocx(previewExam)}
@@ -577,6 +643,58 @@ export const ExamVaultView: React.FC<ExamVaultViewProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Version History Modal */}
+      {historyModalExam && (
+        <ExamVersionHistoryModal
+          isOpen={!!historyModalExam}
+          onClose={() => setHistoryModalExam(null)}
+          examId={historyModalExam.id}
+          examTitle={historyModalExam.title}
+          currentVersion={historyModalExam.version || historyModalExam.bundle?.version || 'v1.0'}
+          history={historyModalExam.versionHistory || historyModalExam.bundle?.versionHistory || []}
+          isPublished={historyModalExam.status === 'published'}
+          onRollbackToVersion={(record) => {
+            soundService.playSuccess();
+            const bundle = record.bundleSnapshot || record.snapshotBundle;
+            const updated: Exam = {
+              ...historyModalExam,
+              bundle,
+              questions: bundle?.questions,
+              questionIds: bundle?.questions?.map((q) => q.id) || historyModalExam.questionIds,
+              questionsCount: bundle?.questions?.length || historyModalExam.questionsCount,
+              version: record.version,
+            };
+            if (onUpdateExam) onUpdateExam(updated);
+            setHistoryModalExam(null);
+            setActionNotice(`Đã khôi phục đề thi về phiên bản ${record.version}`);
+            setTimeout(() => setActionNotice(null), 3500);
+          }}
+        />
+      )}
+
+      {/* Correction Modal for Published Exams */}
+      {correctionModalExam && (
+        <ExamCorrectionModal
+          isOpen={!!correctionModalExam}
+          onClose={() => setCorrectionModalExam(null)}
+          exam={correctionModalExam}
+          authorName={authorName}
+          onSaveCorrection={(log, updatedBundle) => {
+            soundService.playSuccess();
+            const updatedLogs = [log, ...(correctionModalExam.correctionLogs || [])];
+            const updated: Exam = {
+              ...correctionModalExam,
+              bundle: updatedBundle,
+              correctionLogs: updatedLogs,
+            };
+            if (onUpdateExam) onUpdateExam(updated);
+            setCorrectionModalExam(null);
+            setActionNotice(`Đã lưu đính chính đáp án câu ${log.questionNumber} và bổ sung nhật ký.`);
+            setTimeout(() => setActionNotice(null), 3500);
+          }}
+        />
       )}
     </div>
   );

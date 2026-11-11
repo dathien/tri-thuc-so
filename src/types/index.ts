@@ -180,6 +180,38 @@ export interface ExamVariant {
   answerKeyPart2: Record<number, Record<'a' | 'b' | 'c' | 'd', boolean>>;
   answerKeyPart3: Record<number, string>;
   questions?: Question[]; // Danh sách câu hỏi đã hoán vị phương án riêng cho mã đề này
+  isCustomized?: boolean; // Được chỉnh sửa riêng lẻ (Chế độ B)
+  customizedAt?: string;
+  customizedNotes?: string;
+}
+
+export interface CorrectionLogItem {
+  id: string;
+  timestamp: string;
+  teacherName: string;
+  questionNumber: number;
+  part: 1 | 2 | 3;
+  subLabel?: 'a' | 'b' | 'c' | 'd';
+  oldAnswer: string;
+  newAnswer: string;
+  reason: string;
+  affectedCount?: number;
+}
+
+export interface ExamVersionRecord {
+  id: string;
+  examId: string;
+  version: string; // e.g. "v1.0", "v1.1", "v2.0"
+  variantCode?: string; // e.g. "103" if variant-specific
+  timestamp: string;
+  author: string;
+  summary: string;
+  changeType: 'question_edit' | 'answer_edit' | 'swap_question' | 'add_question' | 'delete_question' | 'reorder' | 'matrix_sync' | 'correction' | 'full_save';
+  changesCount: number;
+  questionsCount?: number;
+  totalPoints?: number;
+  snapshotBundle: ExamBundle;
+  bundleSnapshot?: ExamBundle;
 }
 
 export interface ExamBundle {
@@ -197,6 +229,9 @@ export interface ExamBundle {
   durationMinutes: number;
   totalPoints: number;
   pageCount?: number; // Số trang thực tế / ước tính
+  version?: string; // e.g. "v1.0"
+  versionHistory?: ExamVersionRecord[];
+  correctionLogs?: CorrectionLogItem[];
   status: 'draft' | 'approved' | 'published' | 'archived';
   structure: ExamStructureConfig;
   matrixItems: MatrixItem[];
@@ -270,6 +305,10 @@ export interface Exam {
   proctoringMode?: ProctoringMode;
   proctoringConfig?: ProctoringConfig;
   bundle?: ExamBundle;
+  questions?: Question[];
+  version?: string;
+  versionHistory?: ExamVersionRecord[];
+  correctionLogs?: CorrectionLogItem[];
   startDate?: string;
   endDate?: string;
   createdAt: string;

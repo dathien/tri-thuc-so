@@ -49,6 +49,7 @@ export interface MathGraphicConfig {
   params: Record<string, any>;
   viewSettings: GraphicViewSettings;
   camera?: Camera3D;
+  category?: string;
   version: number;
   createdAt: string;
   updatedAt?: string;

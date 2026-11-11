@@ -210,24 +210,47 @@ export default function App() {
     setMatrices((prev) => prev.map((m) => (m.id === updatedMatrix.id ? updatedMatrix : m)));
   };
 
-  const handleSaveExam = (newExam: Omit<Exam, 'id' | 'createdAt'>) => {
-    const created: Exam = {
-      ...newExam,
-      id: `exam-${Date.now()}`,
-      createdAt: new Date().toISOString().slice(0, 10),
-    };
-    setExams((prev) => [created, ...prev]);
+  const [editingExam, setEditingExam] = useState<Exam | null>(null);
 
-    const newAct: ActivityLog = {
-      id: `act-${Date.now()}`,
-      user: currentUser.name,
-      role: 'Giáo viên',
-      action: created.status === 'published' ? 'Phát hành đề thi' : 'Lưu bản nháp đề thi',
-      detail: `Đề: ${created.title} (${created.durationMinutes} phút)`,
-      timeAgo: 'Vừa xong',
-      timestamp: new Date().toLocaleString('vi-VN'),
-    };
-    setActivities((prev) => [newAct, ...prev]);
+  const handleSaveExam = (newExamData: Omit<Exam, 'id' | 'createdAt'>, existingId?: string) => {
+    if (existingId) {
+      setExams((prev) =>
+        prev.map((e) => (e.id === existingId ? { ...e, ...newExamData, updatedAt: new Date().toISOString() } : e))
+      );
+      const newAct: ActivityLog = {
+        id: `act-${Date.now()}`,
+        user: currentUser.name,
+        role: 'Giáo viên',
+        action: 'Cập nhật đề thi',
+        detail: `Đã chỉnh sửa và lưu phiên bản mới của "${newExamData.title}"`,
+        timeAgo: 'Vừa xong',
+        timestamp: new Date().toLocaleString('vi-VN'),
+      };
+      setActivities((prev) => [newAct, ...prev]);
+    } else {
+      const created: Exam = {
+        ...newExamData,
+        id: `exam-${Date.now()}`,
+        createdAt: new Date().toISOString().slice(0, 10),
+      };
+      setExams((prev) => [created, ...prev]);
+
+      const newAct: ActivityLog = {
+        id: `act-${Date.now()}`,
+        user: currentUser.name,
+        role: 'Giáo viên',
+        action: created.status === 'published' ? 'Phát hành đề thi' : 'Lưu bản nháp đề thi',
+        detail: `Đề: ${created.title} (${created.durationMinutes} phút)`,
+        timeAgo: 'Vừa xong',
+        timestamp: new Date().toLocaleString('vi-VN'),
+      };
+      setActivities((prev) => [newAct, ...prev]);
+    }
+    setEditingExam(null);
+  };
+
+  const handleUpdateExistingExam = (updatedExam: Exam) => {
+    setExams((prev) => prev.map((e) => (e.id === updatedExam.id ? updatedExam : e)));
   };
 
   const handleSubmitExam = (submissionData: Omit<ExamSubmission, 'id'>) => {
@@ -351,8 +374,13 @@ export default function App() {
               questions={questions}
               classes={classes}
               currentUser={currentUser}
+              initialExam={editingExam}
+              onClearInitialExam={() => setEditingExam(null)}
               onSaveExam={handleSaveExam}
-              onNavigateToVault={() => setCurrentSection('exam-vault')}
+              onNavigateToVault={() => {
+                setEditingExam(null);
+                setCurrentSection('exam-vault');
+              }}
             />
           )}
 
@@ -360,6 +388,12 @@ export default function App() {
             <ExamVaultView
               exams={exams}
               classes={classes}
+              authorName={currentUser.name}
+              onEditExam={(exam) => {
+                setEditingExam(exam);
+                setCurrentSection('exam-builder');
+              }}
+              onUpdateExam={handleUpdateExistingExam}
               onNavigate={(sec) => setCurrentSection(sec)}
             />
           )}
