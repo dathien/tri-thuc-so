@@ -1,4 +1,5 @@
-import { ExamBundle } from '../types';
+import { ExamBundle, MathGraphicConfig } from '../types';
+import { exportGraphicToSvg } from './mathGraphics/renderEngine';
 
 export type PdfDocumentType = 'student_exam' | 'full_bundle' | 'grading_guide';
 
@@ -175,6 +176,7 @@ export const pdfExportService = {
       <div class="question-item">
         <span class="question-title">Câu ${idx + 1}: </span>
         <span>${escapeHtml(q.content)}</span>
+        ${renderQuestionGraphicHtml(q.graphics)}
         <div class="options-grid">
           ${(q.options || [])
             .map((opt, i) => `<div><strong>${String.fromCharCode(65 + i)}.</strong> ${escapeHtml(opt)}</div>`)
@@ -196,6 +198,7 @@ export const pdfExportService = {
       <div class="question-item">
         <span class="question-title">Câu ${idx + 1}: </span>
         <span>${escapeHtml(q.content)}</span>
+        ${renderQuestionGraphicHtml(q.graphics)}
         <div class="subitem-list">
           ${(q.subItems || [])
             .map((sub) => `
@@ -222,6 +225,7 @@ export const pdfExportService = {
       <div class="question-item">
         <span class="question-title">Câu ${idx + 1}: </span>
         <span>${escapeHtml(q.content)}</span>
+        ${renderQuestionGraphicHtml(q.graphics)}
         <div class="short-ans-box">
           Đáp số: ........................................................................................
         </div>
@@ -352,6 +356,22 @@ export const pdfExportService = {
     }, 800);
   },
 };
+
+function renderQuestionGraphicHtml(graphics?: MathGraphicConfig): string {
+  if (!graphics) return '';
+  if (graphics.exportedImageData) {
+    return `<div style="text-align:center;margin:8px 0;"><img src="${graphics.exportedImageData}" style="max-height:160px;max-width:320px;border-radius:4px;" /></div>`;
+  }
+  if (graphics.svgData) {
+    return `<div style="text-align:center;margin:8px 0;">${graphics.svgData}</div>`;
+  }
+  try {
+    const svg = exportGraphicToSvg(graphics, 320, 180);
+    return `<div style="text-align:center;margin:8px 0;">${svg}</div>`;
+  } catch {
+    return '';
+  }
+}
 
 function escapeHtml(text: string): string {
   if (!text) return '';

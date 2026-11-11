@@ -18,7 +18,7 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
   inline = false,
   block = false,
 }) => {
-  const isDisplayMode = block || !inline;
+  const isDisplayMode = Boolean(block);
 
   const renderedContent = useMemo(() => {
     if (!content) return '';
@@ -48,7 +48,7 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
         try {
           parts.push(
             katex.renderToString(math, {
-              displayMode: isBlockSegment || (!inline && isDisplayMode),
+              displayMode: isBlockSegment || (block && !inline),
               throwOnError: false,
             })
           );

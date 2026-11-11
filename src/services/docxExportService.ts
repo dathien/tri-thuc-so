@@ -19,6 +19,7 @@ import {
   ImageRun,
 } from 'docx';
 import { ExamBundle, Question, MatrixItem, SpecificationItem, ExamVariant } from '../types';
+import { exportGraphicToPngDataUrl } from './mathGraphics/renderEngine';
 
 export type DocxTemplateType = 'full' | 'exam_only' | 'key_only' | 'matrix_spec';
 
@@ -931,8 +932,9 @@ export const docxExportService = {
     );
 
     // If there is an attached diagram/graphic, embed ImageRun
-    if (q.graphics?.exportedImageData) {
-      const bytes = convertDataUrlToUint8Array(q.graphics.exportedImageData);
+    const graphicData = q.graphics?.exportedImageData || (q.graphics ? exportGraphicToPngDataUrl(q.graphics, 360, 220) : null);
+    if (graphicData) {
+      const bytes = convertDataUrlToUint8Array(graphicData);
       if (bytes) {
         paragraphs.push(
           new Paragraph({
@@ -1025,8 +1027,9 @@ export const docxExportService = {
       }),
     ];
 
-    if (q.graphics?.exportedImageData) {
-      const bytes = convertDataUrlToUint8Array(q.graphics.exportedImageData);
+    const graphicData = q.graphics?.exportedImageData || (q.graphics ? exportGraphicToPngDataUrl(q.graphics, 360, 220) : null);
+    if (graphicData) {
+      const bytes = convertDataUrlToUint8Array(graphicData);
       if (bytes) {
         result.push(
           new Paragraph({
@@ -1087,8 +1090,9 @@ export const docxExportService = {
       }),
     ];
 
-    if (q.graphics?.exportedImageData) {
-      const bytes = convertDataUrlToUint8Array(q.graphics.exportedImageData);
+    const graphicData = q.graphics?.exportedImageData || (q.graphics ? exportGraphicToPngDataUrl(q.graphics, 360, 220) : null);
+    if (graphicData) {
+      const bytes = convertDataUrlToUint8Array(graphicData);
       if (bytes) {
         paragraphs.push(
           new Paragraph({

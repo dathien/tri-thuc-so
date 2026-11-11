@@ -82,7 +82,7 @@ import {
 } from '../../data/mockExamDataset';
 import { DocxImportModal } from '../DocxImportModal';
 import { DocxParseResult } from '../../services/docxImportService';
-import { ExamQuestionEditModal } from '../exam-editor/ExamQuestionEditModal';
+import { ExamQuestionEditPage } from '../exam-editor/ExamQuestionEditPage';
 import { ExamQuickAnswerModal } from '../exam-editor/ExamQuickAnswerModal';
 import { SwapQuestionModal } from '../exam-editor/SwapQuestionModal';
 import { ExamVersionHistoryModal } from '../exam-editor/ExamVersionHistoryModal';
@@ -1239,6 +1239,38 @@ export const ExamBuilderView: React.FC<ExamBuilderViewProps> = ({
     onNavigateToVault();
   };
 
+  // Dedicated Full-Page Question Editor (Replaces popup modal)
+  if (isQuestionEditModalOpen && editingQuestion) {
+    return (
+      <ExamQuestionEditPage
+        question={editingQuestion}
+        questionIndex={editingQuestionIndex}
+        examTitle={title || 'Đề kiểm tra chuẩn môn Toán'}
+        mode={editingMode}
+        variantCode={editingVariantCode || activeVariantCode}
+        onBack={() => {
+          setIsQuestionEditModalOpen(false);
+          setTimeout(() => {
+            const el = document.getElementById('question-row-' + editingQuestionIndex);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 150);
+        }}
+        onSaveQuestion={(updatedQ, applyToAll) => {
+          handleSaveQuestionFromModal(updatedQ, applyToAll);
+          setIsQuestionEditModalOpen(false);
+          setTimeout(() => {
+            const el = document.getElementById('question-row-' + editingQuestionIndex);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 150);
+        }}
+        onOpenGraphicsEditor={() => {
+          setGraphicsTargetQuestion(editingQuestion);
+          setIsGraphicsPickerOpen(true);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header Bar */}
@@ -2364,6 +2396,7 @@ export const ExamBuilderView: React.FC<ExamBuilderViewProps> = ({
                     return (
                       <div
                         key={q.id}
+                        id={`question-row-${fullIdx}`}
                         className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-slate-300 transition-all space-y-2.5 text-xs shadow-2xs"
                       >
                         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
@@ -2521,6 +2554,7 @@ export const ExamBuilderView: React.FC<ExamBuilderViewProps> = ({
                     return (
                       <div
                         key={q.id}
+                        id={`question-row-${fullIdx}`}
                         className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-slate-300 transition-all space-y-2.5 text-xs shadow-2xs"
                       >
                         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
@@ -2668,6 +2702,7 @@ export const ExamBuilderView: React.FC<ExamBuilderViewProps> = ({
                     return (
                       <div
                         key={q.id}
+                        id={`question-row-${fullIdx}`}
                         className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-slate-300 transition-all space-y-2.5 text-xs shadow-2xs"
                       >
                         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
@@ -3790,23 +3825,6 @@ export const ExamBuilderView: React.FC<ExamBuilderViewProps> = ({
             </div>
           </div>
         </div>
-      )}
-
-      {/* Question Edit Modal (Mode A & Mode B) */}
-      {isQuestionEditModalOpen && editingQuestion && (
-        <ExamQuestionEditModal
-          isOpen={isQuestionEditModalOpen}
-          onClose={() => setIsQuestionEditModalOpen(false)}
-          question={editingQuestion}
-          questionIndex={editingQuestionIndex}
-          mode={editingMode}
-          variantCode={editingVariantCode || activeVariantCode}
-          onSaveQuestion={handleSaveQuestionFromModal}
-          onOpenGraphicsEditor={() => {
-            setGraphicsTargetQuestion(editingQuestion);
-            setIsGraphicsPickerOpen(true);
-          }}
-        />
       )}
 
       {/* Quick Answer Key Editor Modal */}

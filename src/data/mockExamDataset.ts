@@ -124,6 +124,28 @@ export const BENCHMARK_EXAM_QUESTIONS: Question[] = [
     correctAnswer: 'B',
     explanation: 'Dựa vào bảng biến thiên, ta thấy $f\'(x) > 0$ trên các khoảng $(-\\infty; 0)$ và $(2; +\\infty)$. Do đó hàm số đồng biến trên khoảng $(-\\infty; 0)$.',
     points: 0.25,
+    graphics: {
+      id: 'fig-bm-p1-01',
+      type: 'variation_table',
+      title: 'Bảng biến thiên hàm số y = f(x)',
+      caption: 'Bảng biến thiên hàm số y = f(x)',
+      grade: 12,
+      topic: 'Khoảng đồng biến của hàm số',
+      params: {
+        fnPreset: 'cubic',
+        xValues: '-∞, 0, 2, +∞',
+        derivativeSigns: '+, 0, -, 0, +',
+        yValues: '-∞, 4, 0, +∞',
+      },
+      viewSettings: {
+        showGrid: false,
+        showAxes: false,
+        showLabels: true,
+        theme: 'clean_white',
+      },
+      version: 1,
+      createdAt: '2026-02-01',
+    },
     createdAt: '2026-02-01',
   },
   {
