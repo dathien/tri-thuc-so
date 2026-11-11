@@ -88,7 +88,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
-              Xin chào, {currentUser.name}!
+              Xin chào, {currentUser.name.includes('Hồ Nguyễn Đa Thiện') ? 'Thầy Hồ Nguyễn Đa Thiện' : currentUser.name}!
             </h1>
             <span className="text-[11px] font-semibold bg-white/20 px-2 py-0.5 rounded-full border border-white/25">
               {currentUser.role === 'teacher' ? 'Quản trị viên Chuyên môn' : 'Học sinh'}

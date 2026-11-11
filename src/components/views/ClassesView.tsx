@@ -72,7 +72,7 @@ export const ClassesView: React.FC<ClassesViewProps> = ({
       schoolYear: '2025-2026',
       studentCount: 0,
       roomCode,
-      homeroomTeacher: 'GV. Hồ Nguyễn Đa Thiện',
+      homeroomTeacher: 'Thầy Hồ Nguyễn Đa Thiện',
       description: newClassDescription || 'Lớp học Toán THPT',
     });
 

@@ -40,20 +40,31 @@ export interface MathShortcutItem {
   label: string;
   insert: string;
   title: string;
-  category: 'algebra' | 'vector' | 'calculus' | 'interval' | 'relation';
+  category: 'algebra' | 'vector' | 'calculus' | 'interval' | 'set' | 'relation';
 }
 
 export const MATH_SHORTCUT_CATEGORIES = [
   { id: 'all', label: 'Tất cả' },
+  { id: 'set', label: 'Tập hợp & Miền xác định' },
   { id: 'vector', label: 'Vectơ & Tọa độ' },
   { id: 'algebra', label: 'Đại số & Phân số' },
-  { id: 'calculus', label: 'Giải tích & Giới hạn' },
+  { id: 'calculus', label: 'Giải tích & Tiệm cận' },
   { id: 'interval', label: 'Khoảng & Đoạn' },
   { id: 'relation', label: 'Quan hệ & Ký hiệu' },
 ];
 
 export const MATH_SHORTCUTS: MathShortcutItem[] = [
-  // 1. Vectơ & Tọa độ
+  // 1. Tập hợp & Miền xác định
+  { label: 'ℝ', insert: '\\mathbb{R}', title: 'Tập số thực ℝ', category: 'set' },
+  { label: 'ℝ\\{-1}', insert: '\\mathbb{R}\\setminus\\{-1\\}', title: 'Hiệu tập hợp ℝ\\{-1}', category: 'set' },
+  { label: 'D=ℝ\\{x₀}', insert: 'D = \\mathbb{R}\\setminus\\{-1\\}', title: 'Tập xác định D = ℝ\\{-1}', category: 'set' },
+  { label: 'ℤ', insert: '\\mathbb{Z}', title: 'Tập số nguyên ℤ', category: 'set' },
+  { label: 'ℕ', insert: '\\mathbb{N}', title: 'Tập số tự nhiên ℕ', category: 'set' },
+  { label: '∅', insert: '\\emptyset', title: 'Tập rỗng', category: 'set' },
+  { label: '∪', insert: '\\cup', title: 'Hợp tập hợp', category: 'set' },
+  { label: '∩', insert: '\\cap', title: 'Giao tập hợp', category: 'set' },
+
+  // 2. Vectơ & Tọa độ
   { label: 'a⃗', insert: '\\vec{a}', title: 'Vectơ a', category: 'vector' },
   { label: 'b⃗', insert: '\\vec{b}', title: 'Vectơ b', category: 'vector' },
   { label: 'u⃗', insert: '\\vec{u}', title: 'Vectơ u', category: 'vector' },
@@ -61,10 +72,15 @@ export const MATH_SHORTCUTS: MathShortcutItem[] = [
   { label: '0⃗', insert: '\\vec{0}', title: 'Vectơ 0', category: 'vector' },
   { label: 'AB⃗', insert: '\\vec{AB}', title: 'Vectơ AB', category: 'vector' },
   { label: '(x₀;y₀;z₀)', insert: '(x_0; y_0; z_0)', title: 'Tọa độ điểm', category: 'vector' },
+  { label: '(0;-2)', insert: '(0; -2)', title: 'Tọa độ giao điểm (0; -2)', category: 'vector' },
+  { label: '(2;0)', insert: '(2; 0)', title: 'Tọa độ giao điểm (2; 0)', category: 'vector' },
   { label: '(4;-2;6)', insert: '(4; -2; 6)', title: 'Mẫu tọa độ không gian', category: 'vector' },
 
-  // 2. Đại số & Lũy thừa
+  // 3. Đại số & Lũy thừa
   { label: 'a/b', insert: '\\frac{a}{b}', title: 'Phân số', category: 'algebra' },
+  { label: 'f(x)', insert: 'f(x) = \\frac{x - 2}{x + 1}', title: 'Hàm phân thức f(x)', category: 'algebra' },
+  { label: '3/(x+1)²', insert: '\\frac{3}{(x+1)^2}', title: 'Đạo hàm phân thức', category: 'algebra' },
+  { label: '(C)', insert: '(C)', title: 'Ký hiệu đồ thị (C)', category: 'algebra' },
   { label: '√x', insert: '\\sqrt{x}', title: 'Căn bậc hai', category: 'algebra' },
   { label: 'ⁿ√x', insert: '\\sqrt[n]{x}', title: 'Căn bậc n', category: 'algebra' },
   { label: 'x²', insert: 'x^{2}', title: 'Lũy thừa / Số mũ', category: 'algebra' },
@@ -73,9 +89,12 @@ export const MATH_SHORTCUTS: MathShortcutItem[] = [
   { label: '±', insert: '\\pm', title: 'Cộng trừ', category: 'algebra' },
   { label: 'Δ', insert: '\\Delta', title: 'Biệt thức Delta', category: 'algebra' },
 
-  // 3. Giải tích & Giới hạn
+  // 4. Giải tích & Tiệm cận
   { label: "f'(x)", insert: "f'(x)", title: "Đạo hàm f'(x)", category: 'calculus' },
+  { label: "f'(x)>0", insert: "f'(x) > 0", title: "Điều kiện f'(x) > 0", category: 'calculus' },
   { label: "y'", insert: "y'", title: "Đạo hàm y'", category: 'calculus' },
+  { label: 'x=-1', insert: 'x = -1', title: 'Tiệm cận đứng x = -1', category: 'calculus' },
+  { label: 'y=1', insert: 'y = 1', title: 'Tiệm cận ngang y = 1', category: 'calculus' },
   { label: 'lim x→x₀', insert: '\\lim_{x \\to x_0}', title: 'Giới hạn tại x₀', category: 'calculus' },
   { label: 'lim x→+∞', insert: '\\lim_{x \\to +\\infty}', title: 'Giới hạn dương vô cực', category: 'calculus' },
   { label: 'lim x→-∞', insert: '\\lim_{x \\to -\\infty}', title: 'Giới hạn âm vô cực', category: 'calculus' },
@@ -83,15 +102,17 @@ export const MATH_SHORTCUTS: MathShortcutItem[] = [
   { label: '∫', insert: '\\int f(x)\\,dx', title: 'Nguyên hàm', category: 'calculus' },
   { label: '∑', insert: '\\sum_{i=1}^{n}', title: 'Tổng sigma', category: 'calculus' },
 
-  // 4. Khoảng & Đoạn
+  // 5. Khoảng & Đoạn
   { label: '+∞', insert: '+\\infty', title: 'Dương vô cực', category: 'interval' },
   { label: '-∞', insert: '-\\infty', title: 'Âm vô cực', category: 'interval' },
+  { label: '(-∞; 0)', insert: '(-\\infty; 0)', title: 'Khoảng (-∞; 0)', category: 'interval' },
+  { label: '(2; +∞)', insert: '(2; +\\infty)', title: 'Khoảng (2; +∞)', category: 'interval' },
   { label: '(a; b)', insert: '(a; b)', title: 'Khoảng (a; b)', category: 'interval' },
   { label: '[a; b]', insert: '[a; b]', title: 'Đoạn [a; b]', category: 'interval' },
   { label: '[a; b)', insert: '[a; b)', title: 'Nửa khoảng [a; b)', category: 'interval' },
   { label: '(-∞; +∞)', insert: '(-\\infty; +\\infty)', title: 'Toàn trục số', category: 'interval' },
 
-  // 5. Quan hệ & Ký hiệu
+  // 6. Quan hệ & Ký hiệu
   { label: '≤', insert: '\\le', title: 'Nhỏ hơn hoặc bằng', category: 'relation' },
   { label: '≥', insert: '\\ge', title: 'Lớn hơn hoặc bằng', category: 'relation' },
   { label: '≠', insert: '\\ne', title: 'Khác', category: 'relation' },
@@ -156,7 +177,10 @@ export const ExamQuestionEditPage: React.FC<ExamQuestionEditPageProps> = ({
   const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
   const explanationTextareaRef = useRef<HTMLTextAreaElement>(null);
   const optionInputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const [activeTarget, setActiveTarget] = useState<'content' | 'explanation' | { optionIdx: number }>('content');
+  const subItemInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [activeTarget, setActiveTarget] = useState<
+    'content' | 'explanation' | { optionIdx: number } | { subItemIdx: number }
+  >('content');
 
   // Question part determination
   const partType: 1 | 2 | 3 =
@@ -276,7 +300,84 @@ export const ExamQuestionEditPage: React.FC<ExamQuestionEditPageProps> = ({
         nextOpts[idx] = inside ? `${optVal}${latexSnippet}` : `${optVal} $${latexSnippet}$`;
         setOptions(nextOpts);
       }
+    } else if (typeof activeTarget === 'object' && 'subItemIdx' in activeTarget) {
+      const idx = activeTarget.subItemIdx;
+      const el = subItemInputRefs.current[idx];
+      if (el) {
+        const start = el.selectionStart || 0;
+        const end = el.selectionEnd || 0;
+        const prev = el.value;
+        const { updated, newCursorPos } = getInsertion(prev, start, end);
+        const nextSub = [...subItems];
+        nextSub[idx] = { ...nextSub[idx], content: updated };
+        setSubItems(nextSub);
+        setTimeout(() => {
+          el.focus();
+          el.setSelectionRange(newCursorPos, newCursorPos);
+        }, 10);
+      } else {
+        const nextSub = [...subItems];
+        const val = nextSub[idx]?.content || '';
+        const inside = isCursorInsideMath(val, val.length);
+        nextSub[idx] = {
+          ...nextSub[idx],
+          content: inside ? `${val}${latexSnippet}` : `${val} $${latexSnippet}$`,
+        };
+        setSubItems(nextSub);
+      }
     }
+  };
+
+  // 1-Click Template: Benchmark True/False Question f(x) = (x-2)/(x+1)
+  const handleLoadTrueFalseBenchmark = () => {
+    soundService.playSuccess();
+    setContent(
+      'Cho hàm số $y = f(x) = \\frac{x - 2}{x + 1}$ có đồ thị là $(C)$. Xét tính đúng hoặc sai của các mệnh đề sau:'
+    );
+    setSubItems([
+      {
+        id: '1',
+        label: 'a',
+        content: 'Tập xác định của hàm số là $D = \\mathbb{R} \\setminus \\{-1\\}$.',
+        isCorrect: true,
+      },
+      {
+        id: '2',
+        label: 'b',
+        content: 'Hàm số nghịch biến trên từng khoảng xác định của nó.',
+        isCorrect: false,
+      },
+      {
+        id: '3',
+        label: 'c',
+        content: 'Đồ thị $(C)$ có tiệm cận đứng là $x = -1$ và tiệm cận ngang là $y = 1$.',
+        isCorrect: true,
+      },
+      {
+        id: '4',
+        label: 'd',
+        content: 'Giao điểm của đồ thị $(C)$ với trục hoành có tọa độ là $(0; -2)$.',
+        isCorrect: false,
+      },
+    ]);
+    setExplanation(
+      'Dựa vào bảng biến thiên, ta thấy $f\'(x) = \\frac{3}{(x+1)^2} > 0$ trên các khoảng $(-\\infty; -1)$ và $(-1; +\\infty)$.\n' +
+      'a) Tập xác định: Mẫu số $x + 1 \\ne 0 \\iff x \\ne -1 \\Rightarrow D = \\mathbb{R} \\setminus \\{-1\\}$. Mệnh đề a) ĐÚNG.\n' +
+      'b) Đạo hàm: $f\'(x) = \\frac{3}{(x+1)^2} > 0, \\forall x \\ne -1$. Do đó hàm số đồng biến trên từng khoảng xác định chứ không nghịch biến. Mệnh đề b) SAI.\n' +
+      'c) Tiệm cận: $\\lim_{x \\to -1} f(x) = \\infty \\Rightarrow x = -1$ là tiệm cận đứng; $\\lim_{x \\to \\pm\\infty} f(x) = 1 \\Rightarrow y = 1$ là tiệm cận ngang. Mệnh đề c) ĐÚNG.\n' +
+      'd) Giao điểm: Với trục hoành ($y = 0 \\iff x = 2$), tọa độ giao điểm là $(2; 0)$. Còn $(0; -2)$ là giao điểm với trục tung ($x = 0$). Mệnh đề d) SAI.'
+    );
+    setPoints(1.0);
+    setCognitiveLevel('comprehension');
+    setIsDirty(true);
+  };
+
+  // Insert standard explanation snippet (Section 8 test case)
+  const handleInsertSampleExplanation = () => {
+    soundService.playClick();
+    const snippet = 'Dựa vào bảng biến thiên, ta thấy $f\'(x) > 0$ trên các khoảng $(-\\infty; 0)$ và $(2; +\\infty)$. ';
+    setExplanation((prev) => `${prev ? prev + '\n' : ''}${snippet}`);
+    setIsDirty(true);
   };
 
   // 1-Click Template: Benchmark Vector & Coordinate Question
@@ -334,6 +435,24 @@ export const ExamQuestionEditPage: React.FC<ExamQuestionEditPageProps> = ({
         `Lời giải đang nhắc đến phương án (${matchedLetter}) nhưng đáp án đúng đang chọn là (${correctAnswer}). Vui lòng kiểm tra lại.`
       );
     }
+  }
+
+  // Check if explanation has conflicting True/False statements for subItems (Part 2)
+  if (partType === 2 && explanation && subItems.length > 0) {
+    subItems.forEach((sub) => {
+      const mentionsConflict = new RegExp(
+        `(mệnh đề\\s+${sub.label}|ý\\s+${sub.label}|câu\\s+${sub.label})[\\s\\:\\-\\.]+(SAI|ĐÚNG)`,
+        'i'
+      ).exec(explanation);
+      if (mentionsConflict) {
+        const textTruth = mentionsConflict[2].toUpperCase() === 'ĐÚNG';
+        if (textTruth !== sub.isCorrect) {
+          consistencyWarnings.push(
+            `Ý (${sub.label}) đang được chọn là [${sub.isCorrect ? 'ĐÚNG' : 'SAI'}] nhưng trong lời giải chi tiết có ghi [${mentionsConflict[2].toUpperCase()}]. Vui lòng đối chiếu tính nhất quán.`
+          );
+        }
+      }
+    });
   }
 
   // Handle Save
@@ -529,17 +648,43 @@ export const ExamQuestionEditPage: React.FC<ExamQuestionEditPageProps> = ({
                 <Calculator className="w-4 h-4 text-indigo-600" />
                 <span>Thanh công cụ chèn công thức Toán học (chèn tại vị trí con trỏ):</span>
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <button
                   type="button"
                   onClick={handleLoadVectorBenchmark}
                   className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold text-[12px] flex items-center gap-1 transition-colors cursor-pointer"
                   title="Tải câu hỏi chuẩn Vectơ & Tọa độ để kiểm tra KaTeX"
                 >
-                  <span>Chèn mẫu Vectơ &amp; Tọa độ</span>
+                  <span>Mẫu Vectơ</span>
                 </button>
+
+                <button
+                  type="button"
+                  onClick={handleLoadTrueFalseBenchmark}
+                  className="px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 font-bold text-[12px] flex items-center gap-1 transition-colors cursor-pointer"
+                  title="Tải câu hỏi Đúng/Sai hàm phân thức f(x) = (x-2)/(x+1) với TXĐ D = ℝ\{-1}"
+                >
+                  <span>Mẫu Đúng/Sai f(x)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleInsertSampleExplanation}
+                  className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold text-[12px] flex items-center gap-1 transition-colors cursor-pointer"
+                  title="Chèn đoạn lời giải mẫu: Dựa vào bảng biến thiên..."
+                >
+                  <span>Mẫu Lời giải (f'&gt;0)</span>
+                </button>
+
                 <span className="text-[13px] text-indigo-600 font-semibold bg-indigo-50/70 px-2 py-0.5 rounded-md border border-indigo-100">
-                  Đang chèn vào: {activeTarget === 'content' ? 'Nội dung câu hỏi' : activeTarget === 'explanation' ? 'Lời giải chi tiết' : `Phương án ${String.fromCharCode(65 + activeTarget.optionIdx)}`}
+                  Đang chèn vào:{' '}
+                  {activeTarget === 'content'
+                    ? 'Nội dung câu hỏi'
+                    : activeTarget === 'explanation'
+                    ? 'Lời giải chi tiết'
+                    : 'optionIdx' in activeTarget
+                    ? `Phương án ${String.fromCharCode(65 + activeTarget.optionIdx)}`
+                    : `Ý ${subItems[activeTarget.subItemIdx]?.label || ''})`}
                 </span>
               </div>
             </div>
@@ -866,17 +1011,33 @@ export const ExamQuestionEditPage: React.FC<ExamQuestionEditPageProps> = ({
                       </span>
 
                       <input
+                        ref={(el) => {
+                          subItemInputRefs.current[idx] = el;
+                        }}
                         type="text"
                         value={sub.content}
+                        onFocus={() => setActiveTarget({ subItemIdx: idx })}
                         onChange={(e) => {
                           const next = [...subItems];
-                          next[idx].content = e.target.value;
+                          next[idx] = { ...next[idx], content: e.target.value };
                           setSubItems(next);
                           setIsDirty(true);
                         }}
-                        placeholder={`Nội dung mệnh đề ${sub.label}... ví dụ: Hàm số đồng biến trên khoảng $(0; 2)$`}
+                        placeholder={`Nội dung mệnh đề ${sub.label}... ví dụ: Tập xác định là $D = \\mathbb{R} \\setminus \\{-1\\}$`}
                         className="flex-1 px-3.5 py-2 rounded-xl bg-white border border-slate-300 text-[16px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                       />
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveTarget({ subItemIdx: idx });
+                          insertFormulaAtCursor('\\mathbb{R}\\setminus\\{-1\\}');
+                        }}
+                        className="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[13px] border border-slate-200 transition-colors shrink-0"
+                        title="Chèn công thức nhanh vào ý này"
+                      >
+                        + Công thức
+                      </button>
 
                       <button
                         type="button"
@@ -1052,16 +1213,26 @@ export const ExamQuestionEditPage: React.FC<ExamQuestionEditPageProps> = ({
                 Lời giải chi tiết &amp; Hướng dẫn chấm
               </h2>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTarget('explanation');
-                insertFormulaAtCursor('f\\\'(x) > 0');
-              }}
-              className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[13px] border border-slate-200 transition-colors"
-            >
-              + Chèn công thức vào lời giải
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleInsertSampleExplanation}
+                className="px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-[13px] border border-emerald-200 transition-colors cursor-pointer"
+                title="Chèn đoạn văn bản kiểm thử: Dựa vào bảng biến thiên, ta thấy f'(x)>0..."
+              >
+                + Chèn đoạn mẫu $f'(x)&gt;0$
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTarget('explanation');
+                  insertFormulaAtCursor("f'(x) > 0");
+                }}
+                className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[13px] border border-slate-200 transition-colors cursor-pointer"
+              >
+                + Chèn công thức vào lời giải
+              </button>
+            </div>
           </div>
 
           <div className="space-y-2">

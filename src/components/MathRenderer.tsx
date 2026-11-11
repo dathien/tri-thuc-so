@@ -20,7 +20,7 @@ export function normalizeLatexString(raw: string): string {
 
   // 1. Fix double-escaped backslashes before known LaTeX command names
   str = str.replace(
-    /\\\\(vec|frac|sqrt|alpha|beta|gamma|delta|Delta|pi|theta|sigma|omega|lim|int|sum|prod|infty|le|ge|ne|approx|in|notin|subset|times|cdot|circ|pm|mp|iff|implies|to|quad|qquad|text|mathbf|mathrm|left|right|begin|end|over|matrix|pmatrix|bmatrix)/g,
+    /\\\\(vec|frac|sqrt|alpha|beta|gamma|delta|Delta|pi|theta|sigma|omega|lim|int|sum|prod|infty|le|ge|ne|approx|in|notin|subset|times|cdot|circ|pm|mp|iff|implies|to|quad|qquad|text|mathbf|mathrm|left|right|begin|end|over|matrix|pmatrix|bmatrix|mathbb|setminus|cup|cap|emptyset)/g,
     '\\$1'
   );
 

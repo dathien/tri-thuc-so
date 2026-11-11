@@ -264,7 +264,7 @@ export const OverviewSlider: React.FC<OverviewSliderProps> = ({ onNavigate }) =>
                       </div>
                       <div>
                         <h4 className="font-bold text-sm text-slate-900">Lớp 12A1 · Chuyên Toán</h4>
-                        <p className="text-[12px] text-slate-500">GV: Thầy Hồ Nguyễn Đa Thiện</p>
+                        <p className="text-[12px] text-slate-500">Thầy Hồ Nguyễn Đa Thiện</p>
                       </div>
                     </div>
                     <span className="text-[12px] font-bold text-teal-700 bg-teal-50 px-2.5 py-1 rounded-full border border-teal-200">

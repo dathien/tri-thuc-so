@@ -18,7 +18,7 @@ import {
 
 export const INITIAL_TEACHER: UserProfile = {
   id: 'teacher-01',
-  name: 'GV. Hồ Nguyễn Đa Thiện',
+  name: 'Thầy Hồ Nguyễn Đa Thiện',
   email: 'dathien.toan@edutest.edu.vn',
   role: 'teacher',
   title: 'Giáo viên Toán THPT',
@@ -45,7 +45,7 @@ export const INITIAL_CLASSES: ClassRoom[] = [
     schoolYear: '2025-2026',
     studentCount: 32,
     roomCode: 'MAT-12A1',
-    homeroomTeacher: 'GV. Hồ Nguyễn Đa Thiện',
+    homeroomTeacher: 'Thầy Hồ Nguyễn Đa Thiện',
     description: 'Lớp trọng điểm ôn luyện tốt nghiệp THPT và đánh giá năng lực môn Toán.',
     createdAt: '2025-09-05',
   },
@@ -611,7 +611,7 @@ export const INITIAL_NOTIFICATIONS: NotificationItem[] = [
 export const INITIAL_ACTIVITY_LOGS: ActivityLog[] = [
   {
     id: 'act-01',
-    user: 'GV. Hồ Nguyễn Đa Thiện',
+    user: 'Thầy Hồ Nguyễn Đa Thiện',
     role: 'Giáo viên',
     action: 'Phát hành đề kiểm tra',
     detail: 'Đề Khảo sát Đạo hàm & Đồ thị đã mở cho lớp 12A1 làm bài trực tuyến',
@@ -638,7 +638,7 @@ export const INITIAL_ACTIVITY_LOGS: ActivityLog[] = [
   },
   {
     id: 'act-04',
-    user: 'GV. Hồ Nguyễn Đa Thiện',
+    user: 'Thầy Hồ Nguyễn Đa Thiện',
     role: 'Giáo viên',
     action: 'Thêm mới câu hỏi',
     detail: 'Bổ sung 4 câu hỏi trắc nghiệm dạng đúng/sai chuyên đề Tích phân Toán 12',
@@ -647,7 +647,7 @@ export const INITIAL_ACTIVITY_LOGS: ActivityLog[] = [
   },
   {
     id: 'act-05',
-    user: 'GV. Hồ Nguyễn Đa Thiện',
+    user: 'Thầy Hồ Nguyễn Đa Thiện',
     role: 'Giáo viên',
     action: 'Cập nhật ma trận đề',
     detail: 'Thiết lập ma trận chuẩn 22 câu cho đề Giữa học kì 1 Toán 12',

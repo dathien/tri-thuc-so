@@ -83,6 +83,12 @@ export function cleanLatexForDocx(content: string): string {
   text = text.replace(/\\right\)/g, ')');
   text = text.replace(/\\left\[/g, '[');
   text = text.replace(/\\right\]/g, ']');
+  text = text.replace(/\\setminus/g, ' \\ ');
+  text = text.replace(/\\\{/g, '{');
+  text = text.replace(/\\\}/g, '}');
+  text = text.replace(/\\cup/g, '∪');
+  text = text.replace(/\\cap/g, '∩');
+  text = text.replace(/\\emptyset/g, '∅');
   text = text.replace(/\\,/g, ' ');
   text = text.replace(/\\;/g, ' ');
   text = text.replace(/\\text\{([^{}]+)\}/g, '$1');

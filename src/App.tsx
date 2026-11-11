@@ -50,7 +50,13 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<UserProfile>(() => {
     try {
       const savedUser = localStorage.getItem('edutest_smart_user');
-      if (savedUser) return JSON.parse(savedUser);
+      if (savedUser) {
+        const parsed = JSON.parse(savedUser);
+        if (parsed.name && parsed.name.includes('Hồ Nguyễn Đa Thiện')) {
+          parsed.name = 'Thầy Hồ Nguyễn Đa Thiện';
+        }
+        return parsed;
+      }
     } catch {}
     const savedSchool = typeof window !== 'undefined' ? localStorage.getItem('edutest_school_name') : null;
     if (savedSchool) {
