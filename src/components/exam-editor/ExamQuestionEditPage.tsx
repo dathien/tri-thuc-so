@@ -36,28 +36,74 @@ interface ExamQuestionEditPageProps {
   onOpenGraphicsEditor: (currentConfig?: MathGraphicConfig) => void;
 }
 
-const MATH_SHORTCUTS = [
-  { label: 'a/b', insert: '\\frac{a}{b}', title: 'Phân số' },
-  { label: '√x', insert: '\\sqrt{x}', title: 'Căn bậc hai' },
-  { label: 'x²', insert: 'x^{2}', title: 'Số mũ' },
-  { label: 'x₁', insert: 'x_{1}', title: 'Chỉ số dưới' },
-  { label: '∫', insert: '\\int_{a}^{b} f(x)\\,dx', title: 'Tích phân' },
-  { label: 'lim', insert: '\\lim_{x \\to x_0} f(x)', title: 'Giới hạn' },
-  { label: 'u⃗', insert: '\\vec{u}', title: 'Véc-tơ' },
-  { label: '∞', insert: '+\\infty', title: 'Vô cực' },
-  { label: '-∞', insert: '-\\infty', title: 'Âm vô cực' },
-  { label: 'π', insert: '\\pi', title: 'Số Pi' },
-  { label: 'α', insert: '\\alpha', title: 'Góc Alpha' },
-  { label: 'Δ', insert: '\\Delta', title: 'Biệt thức Delta' },
-  { label: '±', insert: '\\pm', title: 'Cộng trừ' },
-  { label: '≤', insert: '\\le', title: 'Nhỏ hơn hoặc bằng' },
-  { label: '≥', insert: '\\ge', title: 'Lớn hơn hoặc bằng' },
-  { label: '∈', insert: '\\in', title: 'Thuộc' },
-  { label: '∉', insert: '\\notin', title: 'Không thuộc' },
-  { label: '⇔', insert: '\\Leftrightarrow', title: 'Tương đương' },
-  { label: '⇒', insert: '\\Rightarrow', title: 'Suy ra' },
-  { label: '⊥', insert: '\\perp', title: 'Vuông góc' },
-  { label: '∥', insert: '\\parallel', title: 'Song song' },
+export interface MathShortcutItem {
+  label: string;
+  insert: string;
+  title: string;
+  category: 'algebra' | 'vector' | 'calculus' | 'interval' | 'relation';
+}
+
+export const MATH_SHORTCUT_CATEGORIES = [
+  { id: 'all', label: 'Tất cả' },
+  { id: 'vector', label: 'Vectơ & Tọa độ' },
+  { id: 'algebra', label: 'Đại số & Phân số' },
+  { id: 'calculus', label: 'Giải tích & Giới hạn' },
+  { id: 'interval', label: 'Khoảng & Đoạn' },
+  { id: 'relation', label: 'Quan hệ & Ký hiệu' },
+];
+
+export const MATH_SHORTCUTS: MathShortcutItem[] = [
+  // 1. Vectơ & Tọa độ
+  { label: 'a⃗', insert: '\\vec{a}', title: 'Vectơ a', category: 'vector' },
+  { label: 'b⃗', insert: '\\vec{b}', title: 'Vectơ b', category: 'vector' },
+  { label: 'u⃗', insert: '\\vec{u}', title: 'Vectơ u', category: 'vector' },
+  { label: 'v⃗', insert: '\\vec{v}', title: 'Vectơ v', category: 'vector' },
+  { label: '0⃗', insert: '\\vec{0}', title: 'Vectơ 0', category: 'vector' },
+  { label: 'AB⃗', insert: '\\vec{AB}', title: 'Vectơ AB', category: 'vector' },
+  { label: '(x₀;y₀;z₀)', insert: '(x_0; y_0; z_0)', title: 'Tọa độ điểm', category: 'vector' },
+  { label: '(4;-2;6)', insert: '(4; -2; 6)', title: 'Mẫu tọa độ không gian', category: 'vector' },
+
+  // 2. Đại số & Lũy thừa
+  { label: 'a/b', insert: '\\frac{a}{b}', title: 'Phân số', category: 'algebra' },
+  { label: '√x', insert: '\\sqrt{x}', title: 'Căn bậc hai', category: 'algebra' },
+  { label: 'ⁿ√x', insert: '\\sqrt[n]{x}', title: 'Căn bậc n', category: 'algebra' },
+  { label: 'x²', insert: 'x^{2}', title: 'Lũy thừa / Số mũ', category: 'algebra' },
+  { label: 'x₁', insert: 'x_{1}', title: 'Chỉ số dưới x₁', category: 'algebra' },
+  { label: 'x₀', insert: 'x_{0}', title: 'Chỉ số x₀', category: 'algebra' },
+  { label: '±', insert: '\\pm', title: 'Cộng trừ', category: 'algebra' },
+  { label: 'Δ', insert: '\\Delta', title: 'Biệt thức Delta', category: 'algebra' },
+
+  // 3. Giải tích & Giới hạn
+  { label: "f'(x)", insert: "f'(x)", title: "Đạo hàm f'(x)", category: 'calculus' },
+  { label: "y'", insert: "y'", title: "Đạo hàm y'", category: 'calculus' },
+  { label: 'lim x→x₀', insert: '\\lim_{x \\to x_0}', title: 'Giới hạn tại x₀', category: 'calculus' },
+  { label: 'lim x→+∞', insert: '\\lim_{x \\to +\\infty}', title: 'Giới hạn dương vô cực', category: 'calculus' },
+  { label: 'lim x→-∞', insert: '\\lim_{x \\to -\\infty}', title: 'Giới hạn âm vô cực', category: 'calculus' },
+  { label: '∫ᵇₐ', insert: '\\int_{a}^{b} f(x)\\,dx', title: 'Tích phân xác định', category: 'calculus' },
+  { label: '∫', insert: '\\int f(x)\\,dx', title: 'Nguyên hàm', category: 'calculus' },
+  { label: '∑', insert: '\\sum_{i=1}^{n}', title: 'Tổng sigma', category: 'calculus' },
+
+  // 4. Khoảng & Đoạn
+  { label: '+∞', insert: '+\\infty', title: 'Dương vô cực', category: 'interval' },
+  { label: '-∞', insert: '-\\infty', title: 'Âm vô cực', category: 'interval' },
+  { label: '(a; b)', insert: '(a; b)', title: 'Khoảng (a; b)', category: 'interval' },
+  { label: '[a; b]', insert: '[a; b]', title: 'Đoạn [a; b]', category: 'interval' },
+  { label: '[a; b)', insert: '[a; b)', title: 'Nửa khoảng [a; b)', category: 'interval' },
+  { label: '(-∞; +∞)', insert: '(-\\infty; +\\infty)', title: 'Toàn trục số', category: 'interval' },
+
+  // 5. Quan hệ & Ký hiệu
+  { label: '≤', insert: '\\le', title: 'Nhỏ hơn hoặc bằng', category: 'relation' },
+  { label: '≥', insert: '\\ge', title: 'Lớn hơn hoặc bằng', category: 'relation' },
+  { label: '≠', insert: '\\ne', title: 'Khác', category: 'relation' },
+  { label: '≈', insert: '\\approx', title: 'Xấp xỉ', category: 'relation' },
+  { label: '∈', insert: '\\in', title: 'Thuộc', category: 'relation' },
+  { label: '∉', insert: '\\notin', title: 'Không thuộc', category: 'relation' },
+  { label: '⇔', insert: '\\Leftrightarrow', title: 'Tương đương', category: 'relation' },
+  { label: '⇒', insert: '\\Rightarrow', title: 'Suy ra', category: 'relation' },
+  { label: '⊥', insert: '\\perp', title: 'Vuông góc', category: 'relation' },
+  { label: '∥', insert: '\\parallel', title: 'Song song', category: 'relation' },
+  { label: 'π', insert: '\\pi', title: 'Số Pi', category: 'relation' },
+  { label: 'α', insert: '\\alpha', title: 'Góc Alpha', category: 'relation' },
 ];
 
 export const ExamQuestionEditPage: React.FC<ExamQuestionEditPageProps> = ({
@@ -104,6 +150,7 @@ export const ExamQuestionEditPage: React.FC<ExamQuestionEditPageProps> = ({
   const [isDirty, setIsDirty] = useState<boolean>(false);
   const [showExitConfirm, setShowExitConfirm] = useState<boolean>(false);
   const [isGraphicsPickerModalOpen, setIsGraphicsPickerModalOpen] = useState<boolean>(false);
+  const [selectedShortcutCategory, setSelectedShortcutCategory] = useState<string>('all');
 
   // References for cursor-position formula insertion
   const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -149,10 +196,31 @@ export const ExamQuestionEditPage: React.FC<ExamQuestionEditPageProps> = ({
     setIsDirty(false);
   }, [question]);
 
-  // Insert formula at exact cursor position
+  // Helper to determine if cursor is already inside math mode ($...$)
+  const isCursorInsideMath = (text: string, pos: number): boolean => {
+    let count = 0;
+    for (let i = 0; i < pos; i++) {
+      if (text[i] === '$' && (i === 0 || text[i - 1] !== '\\')) {
+        count++;
+      }
+    }
+    return count % 2 === 1;
+  };
+
+  // Insert formula at exact cursor position without duplicate $ delimiters
   const insertFormulaAtCursor = (latexSnippet: string) => {
     soundService.playClick();
     setIsDirty(true);
+
+    const getInsertion = (prev: string, start: number, end: number) => {
+      const inside = isCursorInsideMath(prev, start);
+      // If already inside math, insert snippet directly without duplicate $
+      // If outside math, wrap snippet in $...$
+      const insertText = inside ? latexSnippet : `$${latexSnippet}$`;
+      const updated = prev.substring(0, start) + insertText + prev.substring(end);
+      const newCursorPos = start + insertText.length;
+      return { updated, newCursorPos };
+    };
 
     if (activeTarget === 'content') {
       const el = contentTextareaRef.current;
@@ -160,15 +228,15 @@ export const ExamQuestionEditPage: React.FC<ExamQuestionEditPageProps> = ({
         const start = el.selectionStart || 0;
         const end = el.selectionEnd || 0;
         const prev = el.value;
-        const insertText = `$${latexSnippet}$`;
-        const updated = prev.substring(0, start) + insertText + prev.substring(end);
+        const { updated, newCursorPos } = getInsertion(prev, start, end);
         setContent(updated);
         setTimeout(() => {
           el.focus();
-          el.setSelectionRange(start + insertText.length, start + insertText.length);
+          el.setSelectionRange(newCursorPos, newCursorPos);
         }, 10);
       } else {
-        setContent((prev) => `${prev} $${latexSnippet}$ `);
+        const inside = isCursorInsideMath(content, content.length);
+        setContent((prev) => (inside ? `${prev}${latexSnippet}` : `${prev} $${latexSnippet}$ `));
       }
     } else if (activeTarget === 'explanation') {
       const el = explanationTextareaRef.current;
@@ -176,15 +244,15 @@ export const ExamQuestionEditPage: React.FC<ExamQuestionEditPageProps> = ({
         const start = el.selectionStart || 0;
         const end = el.selectionEnd || 0;
         const prev = el.value;
-        const insertText = `$${latexSnippet}$`;
-        const updated = prev.substring(0, start) + insertText + prev.substring(end);
+        const { updated, newCursorPos } = getInsertion(prev, start, end);
         setExplanation(updated);
         setTimeout(() => {
           el.focus();
-          el.setSelectionRange(start + insertText.length, start + insertText.length);
+          el.setSelectionRange(newCursorPos, newCursorPos);
         }, 10);
       } else {
-        setExplanation((prev) => `${prev} $${latexSnippet}$ `);
+        const inside = isCursorInsideMath(explanation, explanation.length);
+        setExplanation((prev) => (inside ? `${prev}${latexSnippet}` : `${prev} $${latexSnippet}$ `));
       }
     } else if (typeof activeTarget === 'object' && 'optionIdx' in activeTarget) {
       const idx = activeTarget.optionIdx;
@@ -193,21 +261,43 @@ export const ExamQuestionEditPage: React.FC<ExamQuestionEditPageProps> = ({
         const start = el.selectionStart || 0;
         const end = el.selectionEnd || 0;
         const prev = el.value;
-        const insertText = `$${latexSnippet}$`;
-        const updated = prev.substring(0, start) + insertText + prev.substring(end);
+        const { updated, newCursorPos } = getInsertion(prev, start, end);
         const nextOpts = [...options];
         nextOpts[idx] = updated;
         setOptions(nextOpts);
         setTimeout(() => {
           el.focus();
-          el.setSelectionRange(start + insertText.length, start + insertText.length);
+          el.setSelectionRange(newCursorPos, newCursorPos);
         }, 10);
       } else {
         const nextOpts = [...options];
-        nextOpts[idx] = `${nextOpts[idx] || ''} $${latexSnippet}$`;
+        const optVal = nextOpts[idx] || '';
+        const inside = isCursorInsideMath(optVal, optVal.length);
+        nextOpts[idx] = inside ? `${optVal}${latexSnippet}` : `${optVal} $${latexSnippet}$`;
         setOptions(nextOpts);
       }
     }
+  };
+
+  // 1-Click Template: Benchmark Vector & Coordinate Question
+  const handleLoadVectorBenchmark = () => {
+    soundService.playSuccess();
+    setContent(
+      'Cho hai vectơ $\\vec{a}=(4;-2;6)$ và $\\vec{b}=(1;0;-2)$. Tọa độ của vectơ $2\\vec{a}-\\vec{b}$ là:'
+    );
+    setOptions([
+      '$(7;-4;14)$',
+      '$(3;-2;4)$',
+      '$(5;-2;8)$',
+      '$(3;-1;1)$',
+    ]);
+    setCorrectAnswer('A');
+    setExplanation(
+      'Ta có $2\\vec{a}=2(4;-2;6)=(8;-4;12)$. Do đó $2\\vec{a}-\\vec{b}=(8-1;-4-0;12-(-2))=(7;-4;14)$.'
+    );
+    setPoints(0.25);
+    setCognitiveLevel('comprehension');
+    setIsDirty(true);
   };
 
   // Missing Graphic / Variation Table Detection
@@ -433,29 +523,64 @@ export const ExamQuestionEditPage: React.FC<ExamQuestionEditPageProps> = ({
           </div>
 
           {/* KHU VỰC 2: THANH CÔNG CỤ SOẠN THẢO CÔNG THỨC */}
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
-            <div className="flex items-center justify-between">
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <span className="text-[14px] font-bold text-slate-700 flex items-center gap-1.5">
                 <Calculator className="w-4 h-4 text-indigo-600" />
                 <span>Thanh công cụ chèn công thức Toán học (chèn tại vị trí con trỏ):</span>
               </span>
-              <span className="text-[13px] text-indigo-600 font-medium">
-                Đang chèn vào: {activeTarget === 'content' ? 'Nội dung câu hỏi' : activeTarget === 'explanation' ? 'Lời giải chi tiết' : `Phương án ${String.fromCharCode(65 + activeTarget.optionIdx)}`}
-              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleLoadVectorBenchmark}
+                  className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold text-[12px] flex items-center gap-1 transition-colors cursor-pointer"
+                  title="Tải câu hỏi chuẩn Vectơ & Tọa độ để kiểm tra KaTeX"
+                >
+                  <span>Chèn mẫu Vectơ &amp; Tọa độ</span>
+                </button>
+                <span className="text-[13px] text-indigo-600 font-semibold bg-indigo-50/70 px-2 py-0.5 rounded-md border border-indigo-100">
+                  Đang chèn vào: {activeTarget === 'content' ? 'Nội dung câu hỏi' : activeTarget === 'explanation' ? 'Lời giải chi tiết' : `Phương án ${String.fromCharCode(65 + activeTarget.optionIdx)}`}
+                </span>
+              </div>
             </div>
 
+            {/* Category Filter Tabs */}
+            <div className="flex items-center gap-1.5 flex-wrap border-b border-slate-200 pb-2">
+              {MATH_SHORTCUT_CATEGORIES.map((cat) => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setSelectedShortcutCategory(cat.id)}
+                  className={`px-2.5 py-1 rounded-lg text-[13px] font-bold transition-all cursor-pointer ${
+                    selectedShortcutCategory === cat.id
+                      ? 'bg-indigo-600 text-white shadow-2xs'
+                      : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Shortcut Buttons */}
             <div className="flex items-center gap-1.5 flex-wrap">
-              {MATH_SHORTCUTS.map((item) => (
+              {MATH_SHORTCUTS.filter(
+                (item) => selectedShortcutCategory === 'all' || item.category === selectedShortcutCategory
+              ).map((item) => (
                 <button
                   key={item.label}
                   type="button"
-                  title={item.title}
+                  title={`${item.title} (${item.insert})`}
                   onClick={() => insertFormulaAtCursor(item.insert)}
-                  className="px-2.5 py-1 rounded-lg bg-white hover:bg-indigo-50 border border-slate-200 text-slate-800 font-mono text-[14px] font-bold transition-all shadow-2xs hover:border-indigo-300 hover:text-indigo-700"
+                  className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-indigo-50 border border-slate-200 text-slate-800 font-mono text-[14px] font-bold transition-all shadow-2xs hover:border-indigo-300 hover:text-indigo-700 cursor-pointer"
                 >
                   {item.label}
                 </button>
               ))}
+            </div>
+
+            <div className="text-[12px] text-slate-400 italic">
+              * Tự động nhận diện ngữ cảnh: Nếu con trỏ đã nằm trong cặp dấu $, hệ thống sẽ chèn trực tiếp không lặp dấu $.
             </div>
           </div>
 

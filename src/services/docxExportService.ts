@@ -39,6 +39,15 @@ export function cleanLatexForDocx(content: string): string {
 
   let text = content;
 
+  // 1. Normalize double-escaped backslashes before known LaTeX command names
+  text = text.replace(
+    /\\\\(vec|frac|sqrt|alpha|beta|gamma|delta|Delta|pi|theta|sigma|omega|lim|int|sum|prod|infty|le|ge|ne|approx|in|notin|subset|times|cdot|circ|pm|mp|iff|implies|to|quad|qquad|text|mathbf|mathrm|left|right)/g,
+    '\\$1'
+  );
+
+  // 2. Vector arrows: Word OMML MathRun renders \u20D7 as top vector arrow accent
+  text = text.replace(/\\vec\{([^{}]+)\}/g, '$1⃗');
+
   // Common replacements for clean mathematical display
   text = text.replace(/\\mathbb\{R\}/g, 'ℝ');
   text = text.replace(/\\mathbb\{Z\}/g, 'ℤ');
@@ -61,18 +70,29 @@ export function cleanLatexForDocx(content: string): string {
   text = text.replace(/\\times/g, '×');
   text = text.replace(/\\cdot/g, '·');
   text = text.replace(/\\circ/g, '°');
+  text = text.replace(/\\Leftrightarrow/g, ' ⇔ ');
+  text = text.replace(/\\Rightarrow/g, ' ⇒ ');
   text = text.replace(/\\iff/g, ' ⇔ ');
   text = text.replace(/\\implies/g, ' ⇒ ');
   text = text.replace(/\\to/g, ' → ');
+  text = text.replace(/\\perp/g, '⊥');
+  text = text.replace(/\\parallel/g, '∥');
   text = text.replace(/\\quad/g, '  ');
+  text = text.replace(/\\qquad/g, '   ');
+  text = text.replace(/\\left\(/g, '(');
+  text = text.replace(/\\right\)/g, ')');
+  text = text.replace(/\\left\[/g, '[');
+  text = text.replace(/\\right\]/g, ']');
+  text = text.replace(/\\,/g, ' ');
+  text = text.replace(/\\;/g, ' ');
   text = text.replace(/\\text\{([^{}]+)\}/g, '$1');
-  text = text.replace(/\\vec\{([^{}]+)\}/g, '$1⃗');
   text = text.replace(/\\sqrt\{([^{}]+)\}/g, '√($1)');
   text = text.replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, '($1)/($2)');
   text = text.replace(/\\max_\{[^{}]+\}/g, 'max');
   text = text.replace(/\\min_\{[^{}]+\}/g, 'min');
   text = text.replace(/\\lim_\{[^{}]+\}/g, 'lim');
   text = text.replace(/\\int/g, '∫');
+  text = text.replace(/\\sum/g, '∑');
 
   // Strip remaining $ signs
   text = text.replace(/\$/g, '');
@@ -162,14 +182,43 @@ export function parseTextWithMathRuns(
 ): (TextRun | DocxMath)[] {
   if (!rawText) return [];
 
-  const segments = rawText.split(/(\$[^$]+\$)/g);
+  // Delimiter regex matching $$, $, \[, \(
+  const delimiterRegex = /(\$\$[\s\S]*?\$\$|\$[^\$]+?\$|\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\))/g;
+  const segments = rawText.split(delimiterRegex);
   const elements: (TextRun | DocxMath)[] = [];
 
   for (const seg of segments) {
     if (!seg) continue;
-    if (seg.startsWith('$') && seg.endsWith('$') && seg.length > 2) {
-      const mathInner = seg.slice(1, -1).trim();
+
+    // Check if segment is a delimited math block
+    const isBlockMath =
+      (seg.startsWith('$$') && seg.endsWith('$$')) ||
+      (seg.startsWith('\\[') && seg.endsWith('\\]'));
+    const isInlineMath =
+      (seg.startsWith('$') && seg.endsWith('$') && seg.length > 2) ||
+      (seg.startsWith('\\(') && seg.endsWith('\\)'));
+
+    if (isBlockMath || isInlineMath) {
+      let mathInner = '';
+      if (isBlockMath) {
+        mathInner = seg.slice(2, -2).trim();
+      } else {
+        mathInner = seg.slice(1, -1).trim();
+      }
       const mathObj = convertLatexToDocxMath(mathInner);
+      if (mathObj) {
+        elements.push(mathObj);
+        continue;
+      }
+    }
+
+    // Check if the segment is a standalone coordinate tuple or interval, e.g. (3;-2;8) or (4; -2; 6)
+    const isCoordinateOrFormula =
+      /^\s*[\(\[]\s*[\+\-]?[0-9a-zA-Z\.\,\s;\\\/_\^]+\s*[\)\]]\s*$/.test(seg) ||
+      /\\[a-zA-Z]+/.test(seg);
+
+    if (isCoordinateOrFormula) {
+      const mathObj = convertLatexToDocxMath(seg.trim());
       if (mathObj) {
         elements.push(mathObj);
         continue;

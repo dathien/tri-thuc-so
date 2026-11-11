@@ -61,6 +61,19 @@
   text-rendering: auto;
 }
 
+.inline-math-container {
+  display: inline;
+  vertical-align: baseline;
+}
+
+.inline-math-container .katex {
+  line-height: 1.25;
+}
+
+.katex .katex-accent, .katex .accent {
+  text-align: center;
+}
+
 /* Slider math display: auto wrap, no scrollbars */
 .slider-math-box {
   scrollbar-width: none;

@@ -271,7 +271,7 @@ export const BENCHMARK_EXAM_QUESTIONS: Question[] = [
       '$(3; -1; 1)$',
     ],
     correctAnswer: 'A',
-    explanation: '$2\\vec{a} = (4; -2; 6)$. Suy ra $2\\vec{a} - \\vec{b} = (4 - 1; -2 - 0; 6 - (-2)) = (3; -2; 8)$.',
+    explanation: 'Ta có $2\\vec{a} = (4; -2; 6)$ và $\\vec{b} = (1; 0; -2)$. Do đó $2\\vec{a} - \\vec{b} = (4 - 1; -2 - 0; 6 - (-2)) = (3; -2; 8)$.',
     points: 0.25,
     graphics: {
       id: 'fig-bm-p1-06',
