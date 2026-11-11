@@ -18,6 +18,7 @@ import {
   Sparkles,
   Lock,
   X,
+  GraduationCap,
 } from 'lucide-react';
 import { Exam, ClassRoom, ExamBundle } from '../../types';
 import { SectionKey } from '../Sidebar';
@@ -399,10 +400,42 @@ export const ExamVaultView: React.FC<ExamVaultViewProps> = ({
               </button>
             </div>
 
+            {/* School / Exam Info Banner */}
+            <div className="mx-6 mt-4 p-3 rounded-xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between text-xs text-slate-700 gap-2 shrink-0">
+              <div className="flex items-center gap-2">
+                <GraduationCap className="w-4 h-4 text-indigo-600 shrink-0" />
+                <span className="font-semibold text-slate-500">Tên trường:</span>
+                <span className="font-bold text-slate-900 uppercase">
+                  {getBundle(previewExam).schoolName || 'TRƯỜNG THPT'}
+                </span>
+              </div>
+              <div className="flex items-center gap-3 text-slate-500">
+                <span>Tổ Toán - Tin học</span>
+                <span>•</span>
+                <span>Năm học: 2025 - 2026</span>
+              </div>
+            </div>
+
             {/* Modal Content */}
             <div className="p-6 overflow-y-auto flex-1 text-xs space-y-4">
               {activeTab === 'paper' && (
                 <div className="space-y-4">
+                  {/* Formal Paper Header */}
+                  <div className="p-4 rounded-xl border border-slate-200 bg-white grid grid-cols-2 gap-4 text-center">
+                    <div>
+                      <div className="font-bold text-xs uppercase text-slate-900">
+                        {getBundle(previewExam).schoolName || 'TRƯỜNG THPT'}
+                      </div>
+                      <div className="font-bold text-[11px] text-slate-600">TỔ TOÁN - TIN HỌC</div>
+                      <div className="italic text-[10px] text-slate-400 mt-0.5">(Đề thi có 22 câu / 4 trang)</div>
+                    </div>
+                    <div>
+                      <div className="font-bold text-xs uppercase text-slate-900">{previewExam.title}</div>
+                      <div className="font-bold text-[11px] text-slate-600">NĂM HỌC 2025 - 2026</div>
+                      <div className="italic text-[10px] text-slate-400">Thời gian: {previewExam.durationMinutes} phút</div>
+                    </div>
+                  </div>
+
                   {getBundle(previewExam).questions.map((q, idx) => (
                     <div key={q.id} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2">
                       <div className="flex items-center justify-between font-bold text-slate-800">

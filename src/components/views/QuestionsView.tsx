@@ -15,11 +15,13 @@ import {
   Layers,
   Image as ImageIcon,
   Edit2,
+  UploadCloud,
 } from 'lucide-react';
 import { Question, CognitiveLevel, QuestionType, MathGraphicConfig } from '../../types';
 import MathRenderer from '../MathRenderer';
 import MathGraphicDisplay from '../math-graphics/MathGraphicDisplay';
 import MathGraphicsPicker from '../math-graphics/MathGraphicsPicker';
+import DocxImportModal from '../DocxImportModal';
 import { soundService } from '../../utils/audio';
 
 interface QuestionsViewProps {
@@ -55,8 +57,9 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
 
-  // Graphics Picker modal states
+  // Graphics Picker & Docx Import modal states
   const [showGraphicsPicker, setShowGraphicsPicker] = useState(false);
+  const [showDocxImportModal, setShowDocxImportModal] = useState(false);
   const [activeGraphicForPicker, setActiveGraphicForPicker] = useState<MathGraphicConfig | null>(null);
   const [editingTargetQuestion, setEditingTargetQuestion] = useState<Question | null>(null);
   const [newGraphic, setNewGraphic] = useState<MathGraphicConfig | null>(null);
@@ -180,7 +183,29 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setEditingTargetQuestion(null);
+              setActiveGraphicForPicker(null);
+              setShowGraphicsPicker(true);
+            }}
+            className="px-3.5 py-2 rounded-xl border border-indigo-200 bg-indigo-50/70 hover:bg-indigo-100/70 text-indigo-700 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors"
+          >
+            <Layers className="w-4 h-4 text-indigo-600" />
+            Chèn hình học / Đồ thị
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowDocxImportModal(true)}
+            className="px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors"
+          >
+            <UploadCloud className="w-4 h-4 text-indigo-600" />
+            Nhập đề từ Word (.docx)
+          </button>
+
           <button
             type="button"
             onClick={() => setShowAddModal(true)}
@@ -822,6 +847,20 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
             setEditingTargetQuestion(null);
           }}
           onSelect={handleSaveGraphicFromPicker}
+        />
+      )}
+
+      {/* Docx Import Review Modal */}
+      {showDocxImportModal && (
+        <DocxImportModal
+          isOpen={showDocxImportModal}
+          targetMode="question_bank"
+          onClose={() => setShowDocxImportModal(false)}
+          onImportToBank={(importedQuestions) => {
+            importedQuestions.forEach((q) => onAddQuestion(q));
+            setShowDocxImportModal(false);
+            soundService.playSuccess();
+          }}
         />
       )}
     </div>

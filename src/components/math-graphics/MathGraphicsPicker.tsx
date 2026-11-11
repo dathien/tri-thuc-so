@@ -89,12 +89,13 @@ export const MathGraphicsPicker: React.FC<MathGraphicsPickerProps> = ({
 
   const categories = [
     'all',
-    'Hàm số & Đồ thị',
-    'Hình học không gian',
-    'Lượng giác & Conic',
-    'Vectơ & Tọa độ',
-    'Giải tích',
-    'Thống kê & Tập hợp',
+    'Tam giác, đường tròn, tứ giác',
+    'Hình chóp, lăng trụ, hình hộp, đa diện',
+    'Hình học tọa độ Oxy và Oxyz',
+    'Đồ thị hàm số',
+    'Bảng biến thiên',
+    'Hình nón, trụ, cầu, khối tròn xoay',
+    'Hình theo tọa độ / tham số tùy chỉnh',
   ];
 
   return (

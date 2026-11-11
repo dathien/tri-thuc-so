@@ -179,19 +179,24 @@ export interface ExamVariant {
   answerKeyPart1: Record<number, string>;
   answerKeyPart2: Record<number, Record<'a' | 'b' | 'c' | 'd', boolean>>;
   answerKeyPart3: Record<number, string>;
+  questions?: Question[]; // Danh sách câu hỏi đã hoán vị phương án riêng cho mã đề này
 }
 
 export interface ExamBundle {
   id: string;
   code: string;
   title: string;
+  managingAgency?: string; // Cơ quan quản lý GD (Sở GD&ĐT / Phòng GD&ĐT)
   schoolName: string;
-  academicYear: string;
+  department?: string; // Tổ chuyên môn, ví dụ: Tổ Toán - Tin học
+  academicYear: string; // Năm học, ví dụ: 2026 - 2027
+  examPeriod?: string; // Tên kỳ kiểm tra, ví dụ: Kiểm tra cuối học kỳ I
   grade: 10 | 11 | 12;
   semester: 1 | 2;
   subject: string;
   durationMinutes: number;
   totalPoints: number;
+  pageCount?: number; // Số trang thực tế / ước tính
   status: 'draft' | 'approved' | 'published' | 'archived';
   structure: ExamStructureConfig;
   matrixItems: MatrixItem[];

@@ -52,8 +52,8 @@ export const MathGraphicDisplay: React.FC<MathGraphicDisplayProps> = ({
   };
 
   return (
-    <div className={`inline-block my-2 text-center ${className}`}>
-      <div className="relative inline-block rounded-xl border border-slate-200 bg-white shadow-2xs overflow-hidden group">
+    <div className={`inline-block my-2 text-center print-avoid-break ${className}`}>
+      <div className="relative inline-block rounded-xl border border-slate-200 bg-white shadow-2xs group">
         <canvas
           ref={canvasRef}
           style={{ width: `${width}px`, height: `${height}px` }}

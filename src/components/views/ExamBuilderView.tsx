@@ -47,6 +47,7 @@ import {
   ExamStructureConfig,
   ExamVariant,
   ExamGradingRulePart2,
+  UserProfile,
 } from '../../types';
 import MathRenderer from '../MathRenderer';
 import MathGraphicDisplay from '../math-graphics/MathGraphicDisplay';
@@ -63,6 +64,8 @@ import {
   BENCHMARK_VARIANTS,
   BENCHMARK_EXAM_BUNDLE,
 } from '../../data/mockExamDataset';
+import { DocxImportModal } from '../DocxImportModal';
+import { DocxParseResult } from '../../services/docxImportService';
 
 interface ExamBuilderViewProps {
   questions: Question[];
@@ -70,6 +73,7 @@ interface ExamBuilderViewProps {
   matrices?: ExamMatrix[];
   onSaveExam: (newExam: Omit<Exam, 'id' | 'createdAt'>) => void;
   onNavigateToVault: () => void;
+  currentUser?: UserProfile;
 }
 
 const COGNITIVE_LEVEL_LABELS: Record<
@@ -102,11 +106,140 @@ const COGNITIVE_LEVEL_LABELS: Record<
   },
 };
 
+export function buildExamVariants(
+  questions: Question[],
+  codesInput: string | number,
+  startCodeNum = 101
+): ExamVariant[] {
+  let codes: string[] = [];
+
+  if (typeof codesInput === 'number') {
+    codes = Array.from({ length: Math.max(1, codesInput) }, (_, i) => String(startCodeNum + i));
+  } else if (!isNaN(Number(codesInput)) && Number(codesInput) > 0 && !String(codesInput).includes(',')) {
+    const count = parseInt(String(codesInput), 10);
+    codes = Array.from({ length: Math.max(1, count) }, (_, i) => String(startCodeNum + i));
+  } else {
+    codes = String(codesInput)
+      .split(/[,;\s]+/)
+      .map((c) => c.trim())
+      .filter((c) => c.length > 0);
+  }
+  const validCodes = codes.length > 0 ? codes : ['101'];
+
+  const p1 = questions.filter((q) => q.part === 1 || q.questionType === 'multiple_choice');
+  const p2 = questions.filter((q) => q.part === 2 || q.questionType === 'true_false');
+  const p3 = questions.filter((q) => q.part === 3 || q.questionType === 'short_answer');
+
+  return validCodes.map((vCode, vIdx) => {
+    // Deterministic pseudo-random based on seed & variant index
+    const pseudoRandom = (seed: number) => {
+      const x = Math.sin(seed + vIdx * 997.1) * 10000;
+      return x - Math.floor(x);
+    };
+
+    function shuffleArray<T>(arr: T[], seedOffset: number): T[] {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(pseudoRandom(seedOffset + i * 37) * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    // 1. Shuffling Question order per part independently
+    const vP1 = vIdx === 0 ? [...p1] : shuffleArray(p1, 101);
+    const vP2 = vIdx === 0 ? [...p2] : shuffleArray(p2, 202);
+    const vP3 = vIdx === 0 ? [...p3] : shuffleArray(p3, 303);
+
+    // 2. Shuffling Options for Part 1 (multiple choice) and updating correctAnswer
+    const processedP1: Question[] = vP1.map((q, qIndex) => {
+      if (vIdx === 0 || !q.options || q.options.length < 2) {
+        return { ...q };
+      }
+      const originalOptions = [...q.options];
+      const indices = originalOptions.map((_, i) => i);
+      const shuffledIndices = shuffleArray(indices, qIndex * 17 + 5);
+      const newOptions = shuffledIndices.map((idx) => originalOptions[idx]);
+
+      const origCorrectLetter = String(q.correctAnswer || 'A').toUpperCase();
+      const origCorrectIdx = Math.max(0, origCorrectLetter.charCodeAt(0) - 65);
+      const newCorrectPos = shuffledIndices.indexOf(origCorrectIdx);
+      const newCorrectLetter = String.fromCharCode(65 + (newCorrectPos >= 0 ? newCorrectPos : 0));
+
+      return {
+        ...q,
+        options: newOptions,
+        correctAnswer: newCorrectLetter,
+      };
+    });
+
+    // 3. Shuffling Sub-items for Part 2 (True/False)
+    const processedP2: Question[] = vP2.map((q, qIndex) => {
+      if (vIdx === 0 || !q.subItems || q.subItems.length < 2) {
+        return { ...q };
+      }
+      const shuffledSubs = shuffleArray(q.subItems, qIndex * 23 + 9);
+      const relabeledSubs = shuffledSubs.map((sub, sIdx) => ({
+        ...sub,
+        label: (['a', 'b', 'c', 'd'][sIdx] || 'a') as 'a' | 'b' | 'c' | 'd',
+      }));
+
+      return {
+        ...q,
+        subItems: relabeledSubs,
+      };
+    });
+
+    // 4. Part 3
+    const processedP3: Question[] = vP3.map((q) => ({ ...q }));
+
+    const orderedQuestions = [...processedP1, ...processedP2, ...processedP3];
+
+    const orderMap = orderedQuestions.map((q, idx) => ({
+      originalId: q.id,
+      newNumber: idx + 1,
+    }));
+
+    // Generate accurate 1-1 mapped answer keys for this variant
+    const answerKeyPart1: Record<number, string> = {};
+    processedP1.forEach((q, idx) => {
+      answerKeyPart1[idx + 1] = String(q.correctAnswer || 'A');
+    });
+
+    const answerKeyPart2: Record<number, Record<'a' | 'b' | 'c' | 'd', boolean>> = {};
+    processedP2.forEach((q, idx) => {
+      const subMap: Record<'a' | 'b' | 'c' | 'd', boolean> = { a: true, b: false, c: true, d: false };
+      (q.subItems || []).forEach((sub) => {
+        if (sub.label in subMap) {
+          subMap[sub.label as 'a' | 'b' | 'c' | 'd'] = sub.isCorrect;
+        }
+      });
+      answerKeyPart2[idx + 1] = subMap;
+    });
+
+    const answerKeyPart3: Record<number, string> = {};
+    processedP3.forEach((q, idx) => {
+      answerKeyPart3[idx + 1] = String(q.correctAnswer || '');
+    });
+
+    return {
+      code: vCode,
+      questionIds: orderedQuestions.map((q) => q.id),
+      orderMap,
+      answerKeyPart1,
+      answerKeyPart2,
+      answerKeyPart3,
+      questions: orderedQuestions,
+    };
+  });
+}
+
 export const ExamBuilderView: React.FC<ExamBuilderViewProps> = ({
   questions,
   classes,
   onSaveExam,
   onNavigateToVault,
+  currentUser,
 }) => {
   // 7-step Linear Workflow
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5 | 6 | 7>(1);
@@ -114,7 +247,56 @@ export const ExamBuilderView: React.FC<ExamBuilderViewProps> = ({
   // STEP 1: General Info & Structure Config
   const [title, setTitle] = useState(BENCHMARK_EXAM_BUNDLE.title);
   const [code, setCode] = useState(BENCHMARK_EXAM_BUNDLE.code);
-  const [schoolName, setSchoolName] = useState(BENCHMARK_EXAM_BUNDLE.schoolName);
+  const [schoolName, setSchoolName] = useState(() => {
+    if (currentUser?.school && currentUser.school.trim() !== '') {
+      return currentUser.school;
+    }
+    if (typeof window !== 'undefined') {
+      const savedSchool = localStorage.getItem('edutest_school_name');
+      if (savedSchool && savedSchool.trim() !== '') {
+        return savedSchool;
+      }
+    }
+    return '';
+  });
+
+  const handleSchoolNameChange = (val: string) => {
+    setSchoolName(val);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('edutest_school_name', val);
+      try {
+        const storedUser = localStorage.getItem('edutest_smart_user');
+        if (storedUser) {
+          const userObj = JSON.parse(storedUser);
+          userObj.school = val;
+          localStorage.setItem('edutest_smart_user', JSON.stringify(userObj));
+        }
+      } catch {
+        // ignore
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (currentUser?.school && !schoolName) {
+      setSchoolName(currentUser.school);
+    }
+  }, [currentUser?.school]);
+
+  // Additional configurable exam information
+  const [managingAgency, setManagingAgency] = useState('Sở Giáo dục và Đào tạo');
+  const [department, setDepartment] = useState('Tổ Toán - Tin học');
+  const [academicYear, setAcademicYear] = useState('2026 - 2027');
+  const [examPeriod, setExamPeriod] = useState('Kiểm tra cuối học kỳ I');
+  const [subject, setSubject] = useState('Toán học');
+  const [startCodeNum, setStartCodeNum] = useState(101);
+  const [variantCount, setVariantCount] = useState(4);
+  const [variantCodesInput, setVariantCodesInput] = useState('101, 102, 103, 104');
+
+  // Word (.docx) Import Modal & Pre-export Verification Modal
+  const [isDocxImportOpen, setIsDocxImportOpen] = useState(false);
+  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
+
   const [grade, setGrade] = useState<10 | 11 | 12>(12);
   const [semester, setSemester] = useState<1 | 2>(1);
   const [examType, setExamType] = useState<'15_min' | '45_min' | 'midterm' | 'final' | 'national_mock'>('final');
@@ -141,9 +323,51 @@ export const ExamBuilderView: React.FC<ExamBuilderViewProps> = ({
   // STEP 4: Selected Questions
   const [selectedQuestions, setSelectedQuestions] = useState<Question[]>(BENCHMARK_EXAM_QUESTIONS);
 
+  // Dynamic estimated pages
+  const estimatedPages = useMemo(() => {
+    return Math.max(1, Math.ceil(selectedQuestions.length / 5.5));
+  }, [selectedQuestions.length]);
+  const pageNote = `(Đề thi gồm có ${selectedQuestions.length} câu / ${estimatedPages} trang)`;
+
   // STEP 6: Active Variant for preview & export
   const [activeVariantCode, setActiveVariantCode] = useState<string>('101');
-  const [variants, setVariants] = useState<ExamVariant[]>(BENCHMARK_VARIANTS);
+  const [variants, setVariants] = useState<ExamVariant[]>(() => buildExamVariants(BENCHMARK_EXAM_QUESTIONS, '101, 102, 103, 104'));
+
+  // Sync variants whenever variantCodesInput or selectedQuestions changes
+  useEffect(() => {
+    const gen = buildExamVariants(selectedQuestions, variantCodesInput);
+    setVariants(gen);
+    if (!gen.some((v) => v.code === activeVariantCode)) {
+      setActiveVariantCode(gen[0]?.code || '101');
+    }
+  }, [variantCodesInput, selectedQuestions]);
+
+  // Handler to update startCode and variantCount (any positive integer N)
+  const handleVariantParamChange = (start: number, count: number) => {
+    const s = Math.max(1, start);
+    const c = Math.max(1, Math.min(24, count));
+    setStartCodeNum(s);
+    setVariantCount(c);
+    const codes = Array.from({ length: c }, (_, i) => String(s + i)).join(', ');
+    setVariantCodesInput(codes);
+  };
+
+  // Handler for importing questions from Word (.docx)
+  const handleImportedQuestions = (importedQs: Question[], result?: DocxParseResult) => {
+    if (importedQs.length > 0) {
+      setSelectedQuestions(importedQs);
+      if (result?.metadata) {
+        if (result.metadata.examTitle) setTitle(result.metadata.examTitle);
+        if (result.metadata.schoolName) handleSchoolNameChange(result.metadata.schoolName);
+        if (result.metadata.academicYear) setAcademicYear(result.metadata.academicYear);
+        if (result.metadata.examPeriod) setExamPeriod(result.metadata.examPeriod);
+        if (result.metadata.department) setDepartment(result.metadata.department);
+        if (result.metadata.durationMinutes) setDurationMinutes(result.metadata.durationMinutes);
+      }
+      setExportSuccessMsg(`Đã nạp thành công ${importedQs.length} câu hỏi từ tệp Word (.docx) vào quy trình tạo đề!`);
+      setTimeout(() => setExportSuccessMsg(null), 4000);
+    }
+  };
 
   // Status & notifications
   const [isExportingDocx, setIsExportingDocx] = useState(false);
@@ -260,13 +484,17 @@ export const ExamBuilderView: React.FC<ExamBuilderViewProps> = ({
       id: `bundle-${code}-${Date.now()}`,
       code,
       title,
+      managingAgency,
       schoolName,
-      academicYear: 'NĂM HỌC 2025 - 2026',
+      department,
+      academicYear,
+      examPeriod,
       grade,
       semester,
-      subject: 'Toán học',
+      subject,
       durationMinutes,
       totalPoints: calculatedTotalPoints,
+      pageCount: estimatedPages,
       status: 'approved',
       structure,
       matrixItems,
@@ -332,11 +560,17 @@ export const ExamBuilderView: React.FC<ExamBuilderViewProps> = ({
   }, [
     code,
     title,
+    managingAgency,
     schoolName,
+    department,
+    academicYear,
+    examPeriod,
     grade,
     semester,
+    subject,
     durationMinutes,
     calculatedTotalPoints,
+    estimatedPages,
     structure,
     matrixItems,
     specifications,
@@ -349,7 +583,7 @@ export const ExamBuilderView: React.FC<ExamBuilderViewProps> = ({
     selectedClassIds,
   ]);
 
-  // Validation Checks for Step 7 Export
+  // Validation Checks for Step 7 Export & Pre-export checklist modal
   const validationChecks = useMemo(() => {
     const isPointsValid = Math.abs(calculatedTotalPoints - 10.0) < 0.01;
     const isQuestionCountValid = selectedQuestions.length === totalRequiredQuestions;
@@ -399,6 +633,52 @@ export const ExamBuilderView: React.FC<ExamBuilderViewProps> = ({
     } catch (error) {
       console.error('Lỗi khi xuất Word:', error);
       alert('Có lỗi xảy ra khi tạo tệp Word. Vui lòng kiểm tra lại cấu hình đề thi.');
+    } finally {
+      setIsExportingDocx(false);
+    }
+  };
+
+  // Export all variants (.docx)
+  const handleExportAllVariantsDocx = async () => {
+    try {
+      soundService.playClick();
+      setIsExportingDocx(true);
+      const blob = await docxExportService.generateAllVariantsBlob(compiledBundle, {
+        template: 'full',
+        schoolName,
+        fontSizePt: 13,
+      });
+
+      const filename = `${code}_Tat-Ca-${variants.length}-Ma-De-Thi.docx`;
+      docxExportService.downloadBlob(blob, filename);
+
+      soundService.playSuccess();
+      setExportSuccessMsg(`Đã xuất trọn bộ ${variants.length} mã đề thi (.docx): ${filename}`);
+      setTimeout(() => setExportSuccessMsg(null), 4000);
+    } catch (error) {
+      console.error('Lỗi khi xuất tất cả mã đề:', error);
+      alert('Có lỗi xảy ra khi tạo tệp Word cho tất cả mã đề.');
+    } finally {
+      setIsExportingDocx(false);
+    }
+  };
+
+  // Export Answer Keys Comparison Matrix (.docx)
+  const handleExportAnswerMatrixDocx = async () => {
+    try {
+      soundService.playClick();
+      setIsExportingDocx(true);
+      const blob = await docxExportService.generateAnswerKeysMatrixBlob(compiledBundle);
+
+      const filename = `${code}_Bang-Doi-Chieu-Dap-An-${variants.length}-Ma-De.docx`;
+      docxExportService.downloadBlob(blob, filename);
+
+      soundService.playSuccess();
+      setExportSuccessMsg(`Đã xuất Bảng đối chiếu đáp án các mã đề (.docx): ${filename}`);
+      setTimeout(() => setExportSuccessMsg(null), 4000);
+    } catch (error) {
+      console.error('Lỗi khi xuất bảng đối chiếu đáp án:', error);
+      alert('Có lỗi xảy ra khi tạo tệp bảng đối chiếu đáp án.');
     } finally {
       setIsExportingDocx(false);
     }
@@ -550,7 +830,15 @@ export const ExamBuilderView: React.FC<ExamBuilderViewProps> = ({
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setIsDocxImportOpen(true)}
+                  className="px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold flex items-center gap-1.5 border border-blue-200"
+                >
+                  <FileText className="w-3.5 h-3.5 text-blue-600" />
+                  Nhập đề từ Word (.docx)
+                </button>
                 <button
                   type="button"
                   onClick={applyPreset90Min}
@@ -576,6 +864,7 @@ export const ExamBuilderView: React.FC<ExamBuilderViewProps> = ({
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Ví dụ: Đề Khảo sát Chất lượng Cuối Học kỳ I - Môn Toán Lớp 12"
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900 focus:bg-white focus:outline-none"
                 />
               </div>
@@ -591,17 +880,89 @@ export const ExamBuilderView: React.FC<ExamBuilderViewProps> = ({
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Đơn vị trường / Sở GD&ĐT</label>
+                <label className="block font-bold text-slate-700 mb-1">
+                  1. Cơ quan quản lý GD
+                  <span className="text-xs font-normal text-slate-500 ml-1">(Sở / Phòng GD&ĐT)</span>
+                </label>
                 <input
                   type="text"
-                  value={schoolName}
-                  onChange={(e) => setSchoolName(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white"
+                  value={managingAgency}
+                  onChange={(e) => setManagingAgency(e.target.value)}
+                  placeholder="Ví dụ: SỞ GIÁO DỤC VÀ ĐÀO TẠO"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Khối lớp &amp; Học kỳ</label>
+                <label className="block font-bold text-slate-700 mb-1">
+                  2. Tên trường
+                  <span className="text-xs font-normal text-slate-500 ml-1">
+                    (in trên đề thi, ma trận, đặc tả, đáp án & xuất file)
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  value={schoolName}
+                  onChange={(e) => handleSchoolNameChange(e.target.value)}
+                  placeholder="Ví dụ: Trường THPT Nguyễn Du"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  3. Tổ chuyên môn
+                </label>
+                <input
+                  type="text"
+                  value={department}
+                  onChange={(e) => setDepartment(e.target.value)}
+                  placeholder="Ví dụ: Tổ Toán - Tin học"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  4. Năm học
+                </label>
+                <input
+                  type="text"
+                  value={academicYear}
+                  onChange={(e) => setAcademicYear(e.target.value)}
+                  placeholder="Ví dụ: 2026 - 2027"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  5. Tên kỳ kiểm tra
+                </label>
+                <input
+                  type="text"
+                  value={examPeriod}
+                  onChange={(e) => setExamPeriod(e.target.value)}
+                  placeholder="Ví dụ: Kiểm tra cuối học kỳ I"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  6. Môn học
+                </label>
+                <input
+                  type="text"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  placeholder="Ví dụ: Toán học"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">7. Khối lớp &amp; Học kỳ</label>
                 <div className="grid grid-cols-2 gap-2">
                   <select
                     value={grade}
@@ -624,7 +985,7 @@ export const ExamBuilderView: React.FC<ExamBuilderViewProps> = ({
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Thời gian làm bài</label>
+                <label className="block font-bold text-slate-700 mb-1">8. Thời gian làm bài</label>
                 <div className="flex items-center gap-2">
                   <input
                     type="number"
@@ -635,6 +996,74 @@ export const ExamBuilderView: React.FC<ExamBuilderViewProps> = ({
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900"
                   />
                   <span className="font-semibold text-slate-500">phút</span>
+                </div>
+              </div>
+
+              {/* Trộn đề & Cấu hình N mã đề */}
+              <div className="md:col-span-2 bg-indigo-50/50 p-3 rounded-xl border border-indigo-100 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block font-bold text-indigo-900">
+                    9. Trộn đề &amp; Sinh mã đề tự động (Bất kỳ số lượng N mã)
+                  </label>
+                  <div className="flex items-center gap-1">
+                    {[4, 6, 8, 12].map((cnt) => (
+                      <button
+                        key={cnt}
+                        type="button"
+                        onClick={() => handleVariantParamChange(startCodeNum, cnt)}
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          variantCount === cnt ? 'bg-indigo-600 text-white' : 'bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-50'
+                        }`}
+                      >
+                        {cnt} mã
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div>
+                    <span className="text-[10px] font-medium text-slate-500 block mb-0.5">Mã đề bắt đầu:</span>
+                    <input
+                      type="number"
+                      min={101}
+                      value={startCodeNum}
+                      onChange={(e) => handleVariantParamChange(parseInt(e.target.value) || 101, variantCount)}
+                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg font-mono font-bold text-slate-800"
+                    />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-medium text-slate-500 block mb-0.5">Số lượng mã đề (N):</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={24}
+                      value={variantCount}
+                      onChange={(e) => handleVariantParamChange(startCodeNum, parseInt(e.target.value) || 1)}
+                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg font-mono font-bold text-slate-800"
+                    />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-medium text-slate-500 block mb-0.5">Danh sách mã đề sinh ra:</span>
+                    <input
+                      type="text"
+                      value={variantCodesInput}
+                      onChange={(e) => setVariantCodesInput(e.target.value)}
+                      className="w-full px-2.5 py-1.5 bg-white border border-indigo-200 rounded-lg font-mono font-bold text-indigo-700"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  10. Ghi chú số câu &amp; Số trang
+                  <span className="text-xs font-normal text-emerald-600 ml-1">
+                    (Hệ thống tự tính thực tế)
+                  </span>
+                </label>
+                <div className="px-3 py-2 bg-emerald-50/70 border border-emerald-200 rounded-xl text-emerald-900 font-medium">
+                  {pageNote}
                 </div>
               </div>
             </div>
@@ -921,6 +1350,22 @@ export const ExamBuilderView: React.FC<ExamBuilderViewProps> = ({
               </div>
             </div>
 
+            {/* School / Unit Info Banner */}
+            <div className="flex flex-wrap items-center justify-between text-xs bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-700 gap-2">
+              <div className="flex items-center gap-2">
+                <GraduationCap className="w-4 h-4 text-indigo-600 shrink-0" />
+                <span className="font-semibold text-slate-500">Tên trường:</span>
+                <span className="font-bold text-slate-900 uppercase">
+                  {schoolName || 'Chưa nhập tên trường'}
+                </span>
+              </div>
+              <div className="flex items-center gap-3 text-slate-500">
+                <span>Tổ Toán - Tin học</span>
+                <span>•</span>
+                <span>Năm học 2025 - 2026</span>
+              </div>
+            </div>
+
             {/* Matrix Table */}
             <div className="overflow-x-auto border border-slate-200 rounded-xl">
               <table className="w-full text-xs text-left border-collapse">
@@ -1092,6 +1537,22 @@ export const ExamBuilderView: React.FC<ExamBuilderViewProps> = ({
               <span className="text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-xl">
                 {specifications.length} Dòng đặc tả tương ứng 22 câu
               </span>
+            </div>
+
+            {/* School / Unit Info Banner */}
+            <div className="flex flex-wrap items-center justify-between text-xs bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-700 gap-2">
+              <div className="flex items-center gap-2">
+                <GraduationCap className="w-4 h-4 text-indigo-600 shrink-0" />
+                <span className="font-semibold text-slate-500">Tên trường:</span>
+                <span className="font-bold text-slate-900 uppercase">
+                  {schoolName || 'Chưa nhập tên trường'}
+                </span>
+              </div>
+              <div className="flex items-center gap-3 text-slate-500">
+                <span>Tổ Toán - Tin học</span>
+                <span>•</span>
+                <span>Năm học 2025 - 2026</span>
+              </div>
             </div>
 
             {/* Specification Table */}
@@ -1465,6 +1926,22 @@ export const ExamBuilderView: React.FC<ExamBuilderViewProps> = ({
               </span>
             </div>
 
+            {/* School / Unit Info Banner */}
+            <div className="flex flex-wrap items-center justify-between text-xs bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-700 gap-2">
+              <div className="flex items-center gap-2">
+                <GraduationCap className="w-4 h-4 text-indigo-600 shrink-0" />
+                <span className="font-semibold text-slate-500">Tên trường:</span>
+                <span className="font-bold text-slate-900 uppercase">
+                  {schoolName || 'Chưa nhập tên trường'}
+                </span>
+              </div>
+              <div className="flex items-center gap-3 text-slate-500">
+                <span>Tổ Toán - Tin học</span>
+                <span>•</span>
+                <span>Năm học 2025 - 2026</span>
+              </div>
+            </div>
+
             {/* Part 1 Answers Grid */}
             <div className="space-y-2">
               <span className="font-bold text-xs text-indigo-900 uppercase">
@@ -1600,127 +2077,278 @@ export const ExamBuilderView: React.FC<ExamBuilderViewProps> = ({
       {/* ========================================================================= */}
       {/* STEP 6: XEM TRƯỚC ĐỀ THI & MÃ ĐỀ (Preview & Variants)                     */}
       {/* ========================================================================= */}
-      {currentStep === 6 && (
-        <div className="space-y-5 animate-in fade-in duration-200">
-          {/* Variant Selector */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs flex flex-wrap items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-slate-700">Chọn Mã đề thi hiển thị:</span>
-              <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl">
-                {variants.map((v) => (
-                  <button
-                    key={v.code}
-                    type="button"
-                    onClick={() => {
-                      soundService.playClick();
-                      setActiveVariantCode(v.code);
-                    }}
-                    className={`px-3 py-1.5 rounded-lg font-mono font-bold transition-all ${
-                      activeVariantCode === v.code
-                        ? 'bg-indigo-600 text-white shadow-xs'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    Mã {v.code}
-                  </button>
-                ))}
+      {currentStep === 6 && (() => {
+        const activeVariant = variants.find((v) => v.code === activeVariantCode) || variants[0];
+        const previewQuestions = activeVariant?.questions && activeVariant.questions.length > 0
+          ? activeVariant.questions
+          : selectedQuestions;
+
+        const p1Preview = previewQuestions.filter((q) => q.part === 1 || q.questionType === 'multiple_choice');
+        const p2Preview = previewQuestions.filter((q) => q.part === 2 || q.questionType === 'true_false');
+        const p3Preview = previewQuestions.filter((q) => q.part === 3 || q.questionType === 'short_answer');
+
+        return (
+          <div className="space-y-5 animate-in fade-in duration-200">
+            {/* Sticky Top Toolbar for Preview & Print */}
+            <div className="sticky top-2 z-30 bg-white/95 backdrop-blur-md p-3.5 rounded-2xl border border-slate-200 shadow-md flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundService.playClick();
+                    setCurrentStep(5);
+                  }}
+                  className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold flex items-center gap-1.5 transition-colors"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Quay lại chỉnh sửa</span>
+                </button>
+
+                <div className="h-5 w-px bg-slate-200 hidden sm:block" />
+
+                <button
+                  type="button"
+                  onClick={() => setIsVerificationModalOpen(true)}
+                  className="px-3 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold flex items-center gap-1.5 transition-colors"
+                >
+                  <ShieldCheck className="w-4 h-4 text-amber-600" />
+                  <span>Kiểm tra tính chính xác</span>
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundService.playClick();
+                    window.print();
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold flex items-center gap-1.5 shadow-xs transition-colors"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>In đề (Print)</span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isExportingDocx}
+                  onClick={() => handleExportDocx('exam_only')}
+                  className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold flex items-center gap-1.5 shadow-xs transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Xuất Word (.docx)</span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isExportingDocx}
+                  onClick={handleExportAllVariantsDocx}
+                  className="px-3.5 py-2 rounded-xl bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 disabled:opacity-50 text-indigo-900 font-bold flex items-center gap-1.5 transition-colors"
+                >
+                  <Shuffle className="w-4 h-4 text-indigo-600" />
+                  <span>Xuất trọn bộ {variants.length} mã đề</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleExportPdf('student_exam')}
+                  className="px-3.5 py-2 rounded-xl bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-800 font-bold flex items-center gap-1.5 transition-colors"
+                >
+                  <FileText className="w-4 h-4 text-rose-600" />
+                  <span>Xuất PDF</span>
+                </button>
               </div>
             </div>
 
-            <span className="text-[11px] text-slate-500">
-              * Hệ thống duy trì ánh xạ 1-1 giữa mã đề, thứ tự câu và đáp án tương ứng.
-            </span>
-          </div>
-
-          {/* Paper A4 Simulation */}
-          <div className="bg-white rounded-2xl border border-slate-300 shadow-lg p-6 sm:p-10 max-w-4xl mx-auto space-y-6 font-serif">
-            {/* Exam Header */}
-            <div className="grid grid-cols-2 gap-4 border-b pb-4 text-center">
-              <div>
-                <div className="font-bold text-xs uppercase">{schoolName}</div>
-                <div className="font-bold text-xs">TỔ TOÁN - TIN HỌC</div>
-                <div className="italic text-[11px] text-slate-500 mt-1">(Đề thi có 22 câu / 4 trang)</div>
-              </div>
-              <div>
-                <div className="font-bold text-xs uppercase">{title}</div>
-                <div className="font-bold text-xs">NĂM HỌC 2025 - 2026</div>
-                <div className="italic text-[11px] text-slate-500">
-                  Thời gian: {durationMinutes} phút (không kể phát đề)
+            {/* Variant Selector */}
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-bold text-slate-700">Mã đề đang xem:</span>
+                <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl flex-wrap">
+                  {variants.map((v) => (
+                    <button
+                      key={v.code}
+                      type="button"
+                      onClick={() => {
+                        soundService.playClick();
+                        setActiveVariantCode(v.code);
+                      }}
+                      className={`px-3 py-1.5 rounded-lg font-mono font-bold transition-all ${
+                        activeVariantCode === v.code
+                          ? 'bg-indigo-600 text-white shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      Mã {v.code}
+                    </button>
+                  ))}
                 </div>
-                <div className="font-bold text-sm text-indigo-700 mt-1">MÃ ĐỀ: {activeVariantCode}</div>
               </div>
+
+              <span className="text-[11px] text-slate-500">
+                * Thứ tự câu và các phương án A-D / ý a-d được hoán vị độc lập riêng cho Mã {activeVariantCode}.
+              </span>
             </div>
 
-            {/* Student info */}
-            <div className="italic text-xs text-slate-600">
-              Họ và tên thí sinh: .......................................................................................... Số báo danh: ....................... Lớp: .............
-            </div>
-
-            {/* Part I Preview */}
-            <div className="space-y-3 font-sans">
-              <div className="font-bold text-xs text-slate-900">
-                PHẦN I. Câu trắc nghiệm nhiều phương án lựa chọn.
-                <span className="font-normal italic text-slate-500 ml-1">
-                  (Thí sinh trả lời từ câu 1 đến câu 12. Mỗi câu hỏi chỉ chọn một phương án).
-                </span>
-              </div>
-              <div className="space-y-3">
-                {selectedQuestions.slice(0, 4).map((q, idx) => (
-                  <div key={q.id} className="text-xs space-y-1">
-                    <p className="font-medium text-slate-900">
-                      <strong>Câu {idx + 1}: </strong>
-                      <MathRenderer content={q.content} inline />
-                    </p>
-                    {q.graphics && (
-                      <div className="pt-2 pb-1 flex justify-center">
-                        <MathGraphicDisplay config={q.graphics} width={340} height={200} showCaption />
-                      </div>
-                    )}
-                    <div className="grid grid-cols-2 gap-2 pl-4 pt-1">
-                      {(q.options || []).map((opt, i) => (
-                        <div key={i} className="flex items-center gap-1.5 text-slate-700">
-                          <strong>{String.fromCharCode(65 + i)}.</strong>
-                          <MathRenderer content={opt} inline />
-                        </div>
-                      ))}
-                    </div>
+            {/* Paper A4 Simulation */}
+            <div className="bg-white rounded-2xl border border-slate-300 shadow-lg p-6 sm:p-10 max-w-4xl mx-auto space-y-6 font-serif print:shadow-none print:border-none print:p-0">
+              {/* Exam Header */}
+              <div className="grid grid-cols-2 gap-4 border-b pb-4 text-center">
+                <div>
+                  <div className="text-[11px] text-slate-600 uppercase font-sans">{managingAgency || 'SỞ GIÁO DỤC VÀ ĐÀO TẠO'}</div>
+                  <div className="font-bold text-xs uppercase text-slate-900">{schoolName || 'TRƯỜNG THPT'}</div>
+                  <div className="font-bold text-xs text-slate-800">{department || 'TỔ TOÁN - TIN HỌC'}</div>
+                  <div className="italic text-[11px] text-slate-500 mt-1 font-sans">(Đề thi có {previewQuestions.length} câu / {estimatedPages} trang)</div>
+                </div>
+                <div>
+                  <div className="font-bold text-xs uppercase text-slate-900">{examPeriod || title}</div>
+                  <div className="font-bold text-xs text-slate-800">{academicYear || 'NĂM HỌC 2026 - 2027'}</div>
+                  <div className="text-xs text-slate-800 font-sans">Môn: {subject || 'Toán học'} - Lớp {grade}</div>
+                  <div className="italic text-[11px] text-slate-500 font-sans">
+                    Thời gian làm bài: {durationMinutes} phút (không kể phát đề)
                   </div>
-                ))}
+                  <div className="font-bold text-sm text-indigo-700 mt-1 font-sans">MÃ ĐỀ THI: {activeVariantCode}</div>
+                </div>
+              </div>
+
+              {/* Student info */}
+              <div className="italic text-xs text-slate-600 font-sans">
+                Họ và tên thí sinh: .......................................................................................... Số báo danh: ....................... Lớp: .............
+              </div>
+
+              {/* Part I Preview */}
+              {p1Preview.length > 0 && (
+                <div className="space-y-4 font-sans">
+                  <div className="font-bold text-xs text-slate-900 border-b border-slate-100 pb-1">
+                    PHẦN I. Câu trắc nghiệm nhiều phương án lựa chọn.
+                    <span className="font-normal italic text-slate-500 ml-1">
+                      (Thí sinh trả lời từ câu 1 đến câu {p1Preview.length}. Mỗi câu hỏi chỉ chọn một phương án).
+                    </span>
+                  </div>
+                  <div className="space-y-4">
+                    {p1Preview.map((q, idx) => (
+                      <div key={q.id} className="text-xs space-y-1.5">
+                        <div className="font-medium text-slate-900 leading-relaxed">
+                          <strong>Câu {idx + 1}: </strong>
+                          <MathRenderer content={q.content} inline />
+                        </div>
+                        {q.graphics && (
+                          <div className="pt-2 pb-1 flex justify-center">
+                            <MathGraphicDisplay config={q.graphics} width={340} height={200} showCaption />
+                          </div>
+                        )}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-3 pt-1">
+                          {(q.options || []).map((opt, i) => (
+                            <div key={i} className="flex items-start gap-1.5 text-slate-800">
+                              <strong className="text-slate-900">{String.fromCharCode(65 + i)}.</strong>
+                              <MathRenderer content={opt} inline />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Part II Preview */}
+              {p2Preview.length > 0 && (
+                <div className="space-y-4 font-sans pt-4 border-t border-slate-200">
+                  <div className="font-bold text-xs text-slate-900 border-b border-slate-100 pb-1">
+                    PHẦN II. Câu trắc nghiệm đúng sai.
+                    <span className="font-normal italic text-slate-500 ml-1">
+                      (Thí sinh trả lời từ câu 1 đến câu {p2Preview.length}. Trong mỗi ý a), b), c), d) ở mỗi câu, thí sinh chọn đúng hoặc sai).
+                    </span>
+                  </div>
+                  <div className="space-y-4">
+                    {p2Preview.map((q, idx) => (
+                      <div key={q.id} className="text-xs space-y-1.5">
+                        <div className="font-medium text-slate-900 leading-relaxed">
+                          <strong>Câu {idx + 1}: </strong>
+                          <MathRenderer content={q.content} inline />
+                        </div>
+                        {q.graphics && (
+                          <div className="pt-2 pb-1 flex justify-center">
+                            <MathGraphicDisplay config={q.graphics} width={340} height={200} showCaption />
+                          </div>
+                        )}
+                        <div className="space-y-1 pl-4 pt-1">
+                          {(q.subItems || []).map((sub) => (
+                            <div key={sub.id} className="flex items-start gap-2 text-slate-800">
+                              <strong className="text-slate-900">{sub.label})</strong>
+                              <MathRenderer content={sub.content} inline />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Part III Preview */}
+              {p3Preview.length > 0 && (
+                <div className="space-y-4 font-sans pt-4 border-t border-slate-200">
+                  <div className="font-bold text-xs text-slate-900 border-b border-slate-100 pb-1">
+                    PHẦN III. Câu trắc nghiệm trả lời ngắn.
+                    <span className="font-normal italic text-slate-500 ml-1">
+                      (Thí sinh trả lời từ câu 1 đến câu {p3Preview.length}. Viết câu trả lời vào ô quy định).
+                    </span>
+                  </div>
+                  <div className="space-y-4">
+                    {p3Preview.map((q, idx) => (
+                      <div key={q.id} className="text-xs space-y-1.5">
+                        <div className="font-medium text-slate-900 leading-relaxed">
+                          <strong>Câu {idx + 1}: </strong>
+                          <MathRenderer content={q.content} inline />
+                        </div>
+                        {q.graphics && (
+                          <div className="pt-2 pb-1 flex justify-center">
+                            <MathGraphicDisplay config={q.graphics} width={340} height={200} showCaption />
+                          </div>
+                        )}
+                        <div className="pl-4 pt-1 italic text-slate-600">
+                          Đáp số: .................................................
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="text-center font-bold text-xs text-slate-500 font-sans pt-6 border-t border-slate-200">
+                ---------- HẾT ----------
               </div>
             </div>
 
-            <div className="text-center font-bold text-xs text-slate-400">
-              [... Hiển thị đầy đủ 22 câu trong bản in và tệp xuất ...]
+            <div className="flex justify-between items-center">
+              <button
+                type="button"
+                onClick={() => {
+                  soundService.playClick();
+                  setCurrentStep(5);
+                }}
+                className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs flex items-center gap-1.5"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Quay lại Bước 5</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  soundService.playClick();
+                  setCurrentStep(7);
+                }}
+                className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center gap-2 shadow-xs"
+              >
+                <span>Tiếp tục sang Bước 7: Xuất tệp Word &amp; PDF</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
             </div>
           </div>
-
-          <div className="flex justify-between items-center">
-            <button
-              type="button"
-              onClick={() => {
-                soundService.playClick();
-                setCurrentStep(5);
-              }}
-              className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs flex items-center gap-1.5"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Quay lại Bước 5</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                soundService.playClick();
-                setCurrentStep(7);
-              }}
-              className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center gap-2 shadow-xs"
-            >
-              <span>Tiếp tục sang Bước 7: Xuất tệp Word &amp; PDF</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ========================================================================= */}
       {/* STEP 7: XUẤT TÀI LIỆU & QUẢN LÝ BỘ ĐỀ (Export Word & PDF & Save)          */}
@@ -1858,6 +2486,26 @@ export const ExamBuilderView: React.FC<ExamBuilderViewProps> = ({
                   <span>4. Xuất Ma trận &amp; Bản đặc tả (.docx)</span>
                   <span className="text-[10px] text-slate-500 font-normal">Hồ sơ thẩm định chuyên môn</span>
                 </button>
+
+                <button
+                  type="button"
+                  disabled={!validationChecks.isAllPass || isExportingDocx}
+                  onClick={handleExportAllVariantsDocx}
+                  className="w-full py-2.5 px-3 rounded-xl bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 disabled:opacity-50 text-indigo-900 font-bold flex items-center justify-between transition-colors"
+                >
+                  <span>5. Xuất trọn bộ {variants.length} mã đề thi (.docx)</span>
+                  <span className="text-[10px] text-indigo-700 font-normal">Tất cả mã phân cách trang</span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={!validationChecks.isAllPass || isExportingDocx}
+                  onClick={handleExportAnswerMatrixDocx}
+                  className="w-full py-2.5 px-3 rounded-xl bg-purple-50 border border-purple-200 hover:bg-purple-100 disabled:opacity-50 text-purple-900 font-bold flex items-center justify-between transition-colors"
+                >
+                  <span>6. Xuất Bảng đối chiếu đáp án các mã đề (.docx)</span>
+                  <span className="text-[10px] text-purple-700 font-normal">Ma trận so sánh song song</span>
+                </button>
               </div>
             </div>
 
@@ -1949,6 +2597,119 @@ export const ExamBuilderView: React.FC<ExamBuilderViewProps> = ({
               <ArrowLeft className="w-4 h-4" />
               <span>Quay lại Bước 6</span>
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Docx Import Modal */}
+      {isDocxImportOpen && (
+        <DocxImportModal
+          isOpen={isDocxImportOpen}
+          onClose={() => setIsDocxImportOpen(false)}
+          onImportQuestions={handleImportedQuestions}
+        />
+      )}
+
+      {/* Pre-export Quality Verification Modal */}
+      {isVerificationModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl max-w-xl w-full p-6 space-y-5 shadow-2xl border border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-amber-50 text-amber-700">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-slate-900">Bảng Kiểm Định Tính Chính Xác Của Đề Thi</h3>
+                  <p className="text-[11px] text-slate-500">6 tiêu chuẩn kỹ thuật &amp; sư phạm chuẩn Bộ GD&amp;ĐT 2018</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsVerificationModalOpen(false)}
+                className="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center text-lg font-bold"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="space-y-2.5 text-xs">
+              <div className={`p-3 rounded-xl border flex items-center gap-3 ${validationChecks.isPointsValid ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950' : 'bg-rose-50 border-rose-200 text-rose-950'}`}>
+                {validationChecks.isPointsValid ? <Check className="w-4 h-4 text-emerald-600 shrink-0" /> : <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />}
+                <div className="flex-1">
+                  <div className="font-bold flex items-center justify-between">
+                    <span>1. Chuẩn hóa thang điểm 10.0 tuyệt đối</span>
+                    <span className="font-mono">{calculatedTotalPoints} / 10.0đ</span>
+                  </div>
+                  <span className="text-[11px] opacity-80 block">Phần I: 3.0đ | Phần II: 4.0đ | Phần III: 3.0đ</span>
+                </div>
+              </div>
+
+              <div className={`p-3 rounded-xl border flex items-center gap-3 ${validationChecks.isQuestionCountValid ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950' : 'bg-rose-50 border-rose-200 text-rose-950'}`}>
+                {validationChecks.isQuestionCountValid ? <Check className="w-4 h-4 text-emerald-600 shrink-0" /> : <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />}
+                <div className="flex-1">
+                  <div className="font-bold flex items-center justify-between">
+                    <span>2. Số lượng câu hỏi theo đúng Cấu trúc &amp; Ma trận</span>
+                    <span className="font-mono">{selectedQuestions.length} / {totalRequiredQuestions} câu</span>
+                  </div>
+                  <span className="text-[11px] opacity-80 block">Đủ 12 câu P1, 4 câu P2, 6 câu P3</span>
+                </div>
+              </div>
+
+              <div className={`p-3 rounded-xl border flex items-center gap-3 ${validationChecks.hasEnoughPart2 ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950' : 'bg-rose-50 border-rose-200 text-rose-950'}`}>
+                {validationChecks.hasEnoughPart2 ? <Check className="w-4 h-4 text-emerald-600 shrink-0" /> : <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />}
+                <div className="flex-1">
+                  <div className="font-bold flex items-center justify-between">
+                    <span>3. Đủ 16 lệnh hỏi Đúng/Sai (Phần II)</span>
+                    <span className="font-mono">{selectedQuestions.filter(q => q.part === 2 || q.questionType === 'true_false').length * 4} ý</span>
+                  </div>
+                  <span className="text-[11px] opacity-80 block">Mỗi câu có trọn vẹn 4 ý a), b), c), d) và đáp án riêng</span>
+                </div>
+              </div>
+
+              <div className={`p-3 rounded-xl border flex items-center gap-3 ${validationChecks.allHaveAnswers ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950' : 'bg-rose-50 border-rose-200 text-rose-950'}`}>
+                {validationChecks.allHaveAnswers ? <Check className="w-4 h-4 text-emerald-600 shrink-0" /> : <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />}
+                <div className="flex-1">
+                  <div className="font-bold flex items-center justify-between">
+                    <span>4. Không bỏ trống đáp án đúng ở bất kỳ câu nào</span>
+                    <span className="text-[11px] font-semibold text-emerald-700">100% hoàn thiện</span>
+                  </div>
+                  <span className="text-[11px] opacity-80 block">Tất cả câu trắc nghiệm và trả lời ngắn đều có khóa đáp án</span>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl border border-emerald-200 bg-emerald-50/70 text-emerald-950 flex items-center gap-3">
+                <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                <div className="flex-1">
+                  <div className="font-bold flex items-center justify-between">
+                    <span>5. Tính toàn vẹn ánh xạ 1-1 của {variants.length} mã đề thi</span>
+                    <span className="font-mono font-bold text-indigo-700">{variants.length} mã</span>
+                  </div>
+                  <span className="text-[11px] opacity-80 block">Hoán vị câu hỏi &amp; phương án kèm đáp án đồng bộ cho từng mã đề</span>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl border border-emerald-200 bg-emerald-50/70 text-emerald-950 flex items-center gap-3">
+                <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                <div className="flex-1">
+                  <div className="font-bold flex items-center justify-between">
+                    <span>6. Đồ thị &amp; Hình vẽ toán học chính xác</span>
+                    <span className="text-[11px] font-semibold text-emerald-700">Đồng bộ vector</span>
+                  </div>
+                  <span className="text-[11px] opacity-80 block">Dùng chung bộ máy dựng hình Phòng Lab, xuất được SVG/PNG/OMML</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setIsVerificationModalOpen(false)}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs"
+              >
+                Đã kiểm tra &amp; Đóng
+              </button>
+            </div>
           </div>
         </div>
       )}

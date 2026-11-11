@@ -22,7 +22,7 @@ export const INITIAL_TEACHER: UserProfile = {
   email: 'dathien.toan@edutest.edu.vn',
   role: 'teacher',
   title: 'Giáo viên Toán THPT',
-  school: 'Trường THPT Chuyên',
+  school: '',
   subject: 'Toán học (Lớp 10, 11, 12)',
 };
 
@@ -32,7 +32,7 @@ export const INITIAL_STUDENT: UserProfile = {
   email: 'an.nguyen12a1@edutest.edu.vn',
   role: 'student',
   title: 'Học sinh Lớp 12A1',
-  school: 'Trường THPT Chuyên',
+  school: '',
   subject: 'Toán 12',
   classId: 'class-12a1',
 };

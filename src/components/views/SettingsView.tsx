@@ -19,6 +19,7 @@ interface SettingsViewProps {
   soundEnabled: boolean;
   onToggleSound: () => void;
   onResetData: () => void;
+  onUpdateUser?: (updated: UserProfile) => void;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
@@ -26,17 +27,30 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   soundEnabled,
   onToggleSound,
   onResetData,
+  onUpdateUser,
 }) => {
   const [name, setName] = useState(currentUser.name);
   const [email, setEmail] = useState(currentUser.email);
-  const [school, setSchool] = useState(currentUser.school || 'Trường THPT Chuyên');
+  const [school, setSchool] = useState(currentUser.school || '');
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    currentUser.name = name;
-    currentUser.email = email;
-    currentUser.school = school;
+    const updated: UserProfile = {
+      ...currentUser,
+      name,
+      email,
+      school,
+    };
+    if (onUpdateUser) {
+      onUpdateUser(updated);
+    }
+    try {
+      localStorage.setItem('edutest_school_name', school);
+      localStorage.setItem('edutest_smart_user', JSON.stringify(updated));
+    } catch (err) {
+      console.warn('Failed to save user in localStorage', err);
+    }
     setSavedSuccess(true);
     soundService.playSuccess();
     setTimeout(() => setSavedSuccess(false), 3000);
@@ -89,13 +103,19 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             <div className="sm:col-span-2">
-              <label className="block font-semibold text-slate-700 mb-1">Trường học / Đơn vị công tác</label>
+              <label className="block font-semibold text-slate-700 mb-1">
+                Tên trường (sử dụng trên đề thi, ma trận, đặc tả, đáp án &amp; xuất file)
+              </label>
               <input
                 type="text"
+                placeholder="Ví dụ: Trường THPT Nguyễn Du"
                 value={school}
                 onChange={(e) => setSchool(e.target.value)}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none"
               />
+              <p className="text-[11px] text-slate-500 mt-1">
+                Giáo viên chỉ cần lưu một lần. Hệ thống sẽ tự động điền tên trường này vào tất cả các đề kiểm tra mới.
+              </p>
             </div>
           </div>
         </div>

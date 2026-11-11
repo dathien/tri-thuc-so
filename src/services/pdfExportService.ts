@@ -145,7 +145,7 @@ export const pdfExportService = {
   <table class="header-table">
     <tr>
       <td class="header-left">
-        <div class="bold uppercase" style="font-size: 11.5pt;">${bundle.schoolName || 'TRƯỜNG THPT CHUYÊN CHU VĂN AN'}</div>
+        <div class="bold uppercase" style="font-size: 11.5pt;">${bundle.schoolName ? escapeHtml(bundle.schoolName) : 'TRƯỜNG THPT'}</div>
         <div class="bold" style="font-size: 11.5pt;">TỔ TOÁN - TIN HỌC</div>
         <div class="italic" style="font-size: 10.5pt; margin-top: 4px;">(Đề thi gồm có 22 câu / 4 trang)</div>
       </td>
@@ -235,10 +235,23 @@ export const pdfExportService = {
   ${(isFull || isGuideOnly) ? `
   <div class="${!isGuideOnly ? 'page-break' : ''}"></div>
 
-  <div class="text-center bold uppercase" style="font-size: 15pt; margin-bottom: 6px;">
+  <table class="header-table" style="margin-bottom: 12px;">
+    <tr>
+      <td class="header-left">
+        <div class="bold uppercase" style="font-size: 11pt;">${bundle.schoolName ? escapeHtml(bundle.schoolName) : 'TRƯỜNG THPT'}</div>
+        <div class="bold" style="font-size: 11pt;">TỔ TOÁN - TIN HỌC</div>
+      </td>
+      <td class="header-right">
+        <div class="bold uppercase" style="font-size: 12pt;">HƯỚNG DẪN CHẤM &amp; ĐÁP ÁN</div>
+        <div class="italic" style="font-size: 10.5pt;">${escapeHtml(bundle.title)}</div>
+      </td>
+    </tr>
+  </table>
+
+  <div class="text-center bold uppercase" style="font-size: 14pt; margin-bottom: 4px;">
     ĐÁP ÁN VÀ THANG ĐIỂM CHI TIẾT
   </div>
-  <div class="text-center italic" style="margin-bottom: 16px;">
+  <div class="text-center italic" style="margin-bottom: 14px;">
     Đề kiểm tra môn Toán - Khối ${bundle.grade} - Mã đề ${variantCode}
   </div>
 

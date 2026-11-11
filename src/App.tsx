@@ -47,7 +47,17 @@ import {
 import { soundService } from './utils/audio';
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState<UserProfile>(INITIAL_TEACHER);
+  const [currentUser, setCurrentUser] = useState<UserProfile>(() => {
+    try {
+      const savedUser = localStorage.getItem('edutest_smart_user');
+      if (savedUser) return JSON.parse(savedUser);
+    } catch {}
+    const savedSchool = typeof window !== 'undefined' ? localStorage.getItem('edutest_school_name') : null;
+    if (savedSchool) {
+      return { ...INITIAL_TEACHER, school: savedSchool };
+    }
+    return INITIAL_TEACHER;
+  });
   const [currentSection, setCurrentSection] = useState<SectionKey>('overview');
   const [soundEnabled, setSoundEnabled] = useState<boolean>(soundService.isEnabled());
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
@@ -104,6 +114,18 @@ export default function App() {
       if (['classes', 'questions', 'matrix', 'exam-builder', 'exam-vault', 'proctoring'].includes(currentSection)) {
         setCurrentSection('overview');
       }
+    }
+  };
+
+  const handleUpdateUser = (updatedUser: UserProfile) => {
+    setCurrentUser(updatedUser);
+    try {
+      localStorage.setItem('edutest_smart_user', JSON.stringify(updatedUser));
+      if (updatedUser.school) {
+        localStorage.setItem('edutest_school_name', updatedUser.school);
+      }
+    } catch (e) {
+      console.warn('Cannot save user to localStorage', e);
     }
   };
 
@@ -328,6 +350,7 @@ export default function App() {
             <ExamBuilderView
               questions={questions}
               classes={classes}
+              currentUser={currentUser}
               onSaveExam={handleSaveExam}
               onNavigateToVault={() => setCurrentSection('exam-vault')}
             />
@@ -394,6 +417,7 @@ export default function App() {
               soundEnabled={soundEnabled}
               onToggleSound={handleToggleSound}
               onResetData={handleResetData}
+              onUpdateUser={handleUpdateUser}
             />
           )}
 
