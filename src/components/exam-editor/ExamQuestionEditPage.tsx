@@ -19,7 +19,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { Question, CognitiveLevel, QuestionType, MathGraphicConfig } from '../../types';
-import MathRenderer from '../MathRenderer';
+import MathRenderer, { isCursorInsideMath, wrapInMathIfBare } from '../MathRenderer';
 import MathGraphicDisplay from '../math-graphics/MathGraphicDisplay';
 import { MathGraphicsPicker } from '../math-graphics/MathGraphicsPicker';
 import { createDefaultGraphic } from '../../services/mathGraphics/renderEngine';
@@ -220,17 +220,6 @@ export const ExamQuestionEditPage: React.FC<ExamQuestionEditPageProps> = ({
     setIsDirty(false);
   }, [question]);
 
-  // Helper to determine if cursor is already inside math mode ($...$)
-  const isCursorInsideMath = (text: string, pos: number): boolean => {
-    let count = 0;
-    for (let i = 0; i < pos; i++) {
-      if (text[i] === '$' && (i === 0 || text[i - 1] !== '\\')) {
-        count++;
-      }
-    }
-    return count % 2 === 1;
-  };
-
   // Insert formula at exact cursor position without duplicate $ delimiters
   const insertFormulaAtCursor = (latexSnippet: string) => {
     soundService.playClick();
@@ -238,9 +227,14 @@ export const ExamQuestionEditPage: React.FC<ExamQuestionEditPageProps> = ({
 
     const getInsertion = (prev: string, start: number, end: number) => {
       const inside = isCursorInsideMath(prev, start);
+      // Clean snippet if it already contains wrapping $
+      let cleanSnippet = latexSnippet.trim();
+      if (cleanSnippet.startsWith('$') && cleanSnippet.endsWith('$') && cleanSnippet.length > 2) {
+        cleanSnippet = cleanSnippet.slice(1, -1).trim();
+      }
       // If already inside math, insert snippet directly without duplicate $
       // If outside math, wrap snippet in $...$
-      const insertText = inside ? latexSnippet : `$${latexSnippet}$`;
+      const insertText = inside ? cleanSnippet : `$${cleanSnippet}$`;
       const updated = prev.substring(0, start) + insertText + prev.substring(end);
       const newCursorPos = start + insertText.length;
       return { updated, newCursorPos };
@@ -863,12 +857,12 @@ export const ExamQuestionEditPage: React.FC<ExamQuestionEditPageProps> = ({
            ========================================================================= */}
         <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-5">
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <div className="flex items-center gap-2">
-              <span className="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-[14px]">
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="inline-flex items-center justify-center shrink-0 min-w-[56px] px-2.5 py-1 rounded-lg bg-indigo-100 text-indigo-700 font-bold text-[14px] whitespace-nowrap leading-none select-none">
                 4 & 5
               </span>
-              <h2 className="text-[17px] font-bold text-slate-900">
-                Phương án trả lời & Đáp án đúng
+              <h2 className="text-[17px] font-bold text-slate-900 min-w-0 break-words">
+                Phương án trả lời &amp; Đáp án đúng
               </h2>
             </div>
             <span className="text-[13px] text-slate-500 font-medium">
@@ -1097,7 +1091,7 @@ export const ExamQuestionEditPage: React.FC<ExamQuestionEditPageProps> = ({
                     className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-[16px] font-bold text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                   />
                   <div className="text-[13px] text-slate-500">
-                    Xem trước kết xuất: <MathRenderer content={`$${correctAnswer || '?'}$`} inline />
+                    Xem trước kết xuất: <MathRenderer content={wrapInMathIfBare(correctAnswer || '?')} inline />
                   </div>
                 </div>
 
@@ -1259,7 +1253,7 @@ export const ExamQuestionEditPage: React.FC<ExamQuestionEditPageProps> = ({
               <Eye className="w-3.5 h-3.5 text-indigo-600" />
               <span>Xem trước lời giải &amp; hướng dẫn chấm:</span>
             </div>
-            <div className="text-[15px] leading-[1.6] text-slate-800 bg-white p-3 rounded-lg border border-indigo-200 min-h-[44px]">
+            <div className="text-[16px] leading-[1.6] text-slate-800 bg-white p-3.5 rounded-lg border border-indigo-200 min-h-[44px]">
               {explanation ? (
                 <MathRenderer content={explanation} />
               ) : (
@@ -1371,11 +1365,11 @@ export const ExamQuestionEditPage: React.FC<ExamQuestionEditPageProps> = ({
 
             {/* Short Answer Preview for Part 3 */}
             {partType === 3 && (
-              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl space-y-2 text-[15px]">
+              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl space-y-2 text-[16px]">
                 <div className="font-bold text-emerald-950 flex items-center gap-2">
                   <span>Đáp số chuẩn:</span>
                   <span className="font-mono text-[16px] px-2.5 py-1 bg-white rounded border border-emerald-300 text-emerald-800">
-                    <MathRenderer content={`$${correctAnswer || '?'}$`} inline />
+                    <MathRenderer content={wrapInMathIfBare(correctAnswer || '?')} inline />
                   </span>
                 </div>
                 {acceptableAnswersText && (
@@ -1389,10 +1383,10 @@ export const ExamQuestionEditPage: React.FC<ExamQuestionEditPageProps> = ({
             {/* Explanation Preview */}
             {explanation && (
               <div className="p-4 bg-white border border-slate-200 rounded-xl space-y-1.5">
-                <strong className="text-indigo-900 block text-[15px]">
+                <strong className="text-indigo-900 block text-[16px] font-bold">
                   Lời giải chi tiết &amp; Hướng dẫn chấm:
                 </strong>
-                <div className="text-[15px] leading-[1.6] text-slate-700">
+                <div className="text-[16px] leading-[1.6] text-slate-800">
                   <MathRenderer content={explanation} />
                 </div>
               </div>

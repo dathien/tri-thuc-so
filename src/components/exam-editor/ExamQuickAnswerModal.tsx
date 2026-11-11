@@ -179,9 +179,11 @@ export const ExamQuickAnswerModal: React.FC<ExamQuickAnswerModalProps> = ({
                   return (
                     <div key={q.id} className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
                       <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-slate-800 font-mono">Câu {pIdx + 1}:</span>
-                          <span className="text-slate-700 truncate max-w-md">{q.content.slice(0, 100)}...</span>
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <span className="font-bold text-slate-800 font-mono shrink-0">Câu {pIdx + 1}:</span>
+                          <span className="text-slate-700 truncate max-w-md">
+                            <MathRenderer content={q.content} inline />
+                          </span>
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -249,7 +251,7 @@ export const ExamQuickAnswerModal: React.FC<ExamQuickAnswerModalProps> = ({
                   return (
                     <div key={q.id} className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5">
                       <div className="font-bold text-slate-800">
-                        Câu {pIdx + 1}: <span className="font-normal text-slate-600">{q.content.slice(0, 100)}...</span>
+                        Câu {pIdx + 1}: <span className="font-normal text-slate-600"><MathRenderer content={q.content} inline /></span>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -258,8 +260,10 @@ export const ExamQuickAnswerModal: React.FC<ExamQuickAnswerModalProps> = ({
                             key={sub.id}
                             className="p-2 rounded-lg bg-white border border-slate-200 flex items-center justify-between gap-2"
                           >
-                            <span className="font-bold text-slate-700 w-5">{sub.label})</span>
-                            <span className="text-[11px] text-slate-800 flex-1 truncate">{sub.content || `Ý ${sub.label}`}</span>
+                            <span className="font-bold text-slate-700 w-5 shrink-0">{sub.label})</span>
+                            <div className="text-[11px] text-slate-800 flex-1 truncate">
+                              <MathRenderer content={sub.content || `Ý ${sub.label}`} inline />
+                            </div>
                             <button
                               type="button"
                               onClick={() => handleToggleSubItem(globalIdx, sub.id)}

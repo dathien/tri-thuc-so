@@ -746,34 +746,62 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
                   Các lựa chọn đáp án (A, B, C, D)
                 </label>
                 <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="text"
-                    placeholder="Đáp án A: $(0; 1)$"
-                    value={newOptionA}
-                    onChange={(e) => setNewOptionA(e.target.value)}
-                    className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Đáp án B: $(1; -1)$"
-                    value={newOptionB}
-                    onChange={(e) => setNewOptionB(e.target.value)}
-                    className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Đáp án C: $(-1; 3)$"
-                    value={newOptionC}
-                    onChange={(e) => setNewOptionC(e.target.value)}
-                    className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Đáp án D: $(2; 3)$"
-                    value={newOptionD}
-                    onChange={(e) => setNewOptionD(e.target.value)}
-                    className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl"
-                  />
+                  <div className="space-y-1">
+                    <input
+                      type="text"
+                      placeholder="Đáp án A: $(0; 1)$"
+                      value={newOptionA}
+                      onChange={(e) => setNewOptionA(e.target.value)}
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl"
+                    />
+                    {newOptionA && (
+                      <div className="px-2 py-0.5 bg-white border border-slate-200 rounded text-slate-800 text-[11px]">
+                        A: <MathRenderer content={newOptionA} inline />
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <input
+                      type="text"
+                      placeholder="Đáp án B: $(1; -1)$"
+                      value={newOptionB}
+                      onChange={(e) => setNewOptionB(e.target.value)}
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl"
+                    />
+                    {newOptionB && (
+                      <div className="px-2 py-0.5 bg-white border border-slate-200 rounded text-slate-800 text-[11px]">
+                        B: <MathRenderer content={newOptionB} inline />
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <input
+                      type="text"
+                      placeholder="Đáp án C: $(-1; 3)$"
+                      value={newOptionC}
+                      onChange={(e) => setNewOptionC(e.target.value)}
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl"
+                    />
+                    {newOptionC && (
+                      <div className="px-2 py-0.5 bg-white border border-slate-200 rounded text-slate-800 text-[11px]">
+                        C: <MathRenderer content={newOptionC} inline />
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <input
+                      type="text"
+                      placeholder="Đáp án D: $(2; 3)$"
+                      value={newOptionD}
+                      onChange={(e) => setNewOptionD(e.target.value)}
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl"
+                    />
+                    {newOptionD && (
+                      <div className="px-2 py-0.5 bg-white border border-slate-200 rounded text-slate-800 text-[11px]">
+                        D: <MathRenderer content={newOptionD} inline />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -810,11 +838,19 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
                 <label className="block font-semibold text-slate-700 mb-1">Lời giải / Hướng dẫn chấm</label>
                 <textarea
                   rows={2}
-                  placeholder="Ghi chú bước giải và kết quả toán học..."
+                  placeholder="Ghi chú bước giải và kết quả toán học... ví dụ: $f'(x) = 3x^2 - 3 > 0$..."
                   value={newExplanation}
                   onChange={(e) => setNewExplanation(e.target.value)}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl"
                 />
+                {newExplanation && (
+                  <div className="mt-1.5 p-2 bg-slate-100 rounded-lg text-slate-800 text-[11px]">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">
+                      Xem trước lời giải:
+                    </span>
+                    <MathRenderer content={newExplanation} />
+                  </div>
+                )}
               </div>
 
               <div className="pt-2 flex items-center justify-end gap-2">

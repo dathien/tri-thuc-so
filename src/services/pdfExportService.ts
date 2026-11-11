@@ -1,5 +1,6 @@
 import { ExamBundle, MathGraphicConfig } from '../types';
 import { exportGraphicToSvg } from './mathGraphics/renderEngine';
+import { normalizeLatexString } from '../components/MathRenderer';
 
 export type PdfDocumentType = 'student_exam' | 'full_bundle' | 'grading_guide';
 
@@ -175,11 +176,11 @@ export const pdfExportService = {
     .map((q, idx) => `
       <div class="question-item">
         <span class="question-title">Câu ${idx + 1}: </span>
-        <span>${escapeHtml(q.content)}</span>
+        <span>${formatLatexForPdf(q.content)}</span>
         ${renderQuestionGraphicHtml(q.graphics)}
         <div class="options-grid">
           ${(q.options || [])
-            .map((opt, i) => `<div><strong>${String.fromCharCode(65 + i)}.</strong> ${escapeHtml(opt)}</div>`)
+            .map((opt, i) => `<div><strong>${String.fromCharCode(65 + i)}.</strong> ${formatLatexForPdf(opt)}</div>`)
             .join('')}
         </div>
       </div>
@@ -197,13 +198,13 @@ export const pdfExportService = {
     .map((q, idx) => `
       <div class="question-item">
         <span class="question-title">Câu ${idx + 1}: </span>
-        <span>${escapeHtml(q.content)}</span>
+        <span>${formatLatexForPdf(q.content)}</span>
         ${renderQuestionGraphicHtml(q.graphics)}
         <div class="subitem-list">
           ${(q.subItems || [])
             .map((sub) => `
               <div class="subitem-row">
-                <strong>${sub.label})</strong> ${escapeHtml(sub.content)}
+                <strong>${sub.label})</strong> ${formatLatexForPdf(sub.content)}
                 <span style="float: right; margin-right: 20px;">[ ] Đúng &nbsp;&nbsp;&nbsp; [ ] Sai</span>
               </div>
             `)
@@ -224,7 +225,7 @@ export const pdfExportService = {
     .map((q, idx) => `
       <div class="question-item">
         <span class="question-title">Câu ${idx + 1}: </span>
-        <span>${escapeHtml(q.content)}</span>
+        <span>${formatLatexForPdf(q.content)}</span>
         ${renderQuestionGraphicHtml(q.graphics)}
         <div class="short-ans-box">
           Đáp số: ........................................................................................
@@ -381,4 +382,10 @@ function escapeHtml(text: string): string {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
+}
+
+function formatLatexForPdf(text: string): string {
+  if (!text) return '';
+  const normalized = normalizeLatexString(text);
+  return escapeHtml(normalized);
 }

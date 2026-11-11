@@ -18,13 +18,10 @@ export function normalizeLatexString(raw: string): string {
   if (!raw) return '';
   let str = raw;
 
-  // 1. Fix double-escaped backslashes before known LaTeX command names
-  str = str.replace(
-    /\\\\(vec|frac|sqrt|alpha|beta|gamma|delta|Delta|pi|theta|sigma|omega|lim|int|sum|prod|infty|le|ge|ne|approx|in|notin|subset|times|cdot|circ|pm|mp|iff|implies|to|quad|qquad|text|mathbf|mathrm|left|right|begin|end|over|matrix|pmatrix|bmatrix|mathbb|setminus|cup|cap|emptyset)/g,
-    '\\$1'
-  );
+  // 1. Universal normalization of double-escaped backslashes
+  str = str.replace(/\\\\([a-zA-Z]+|\\{|\\}|[,\.;])/g, '\\$1');
 
-  // 2. Count unescaped single $ signs
+  // 2. Count unescaped single $ signs and auto-close unclosed delimiters
   let singleDollarCount = 0;
   for (let i = 0; i < str.length; i++) {
     if (str[i] === '$' && (i === 0 || str[i - 1] !== '\\')) {
@@ -32,12 +29,68 @@ export function normalizeLatexString(raw: string): string {
     }
   }
 
-  // 3. Auto-close if odd number of $ delimiters
   if (singleDollarCount % 2 === 1) {
     str += '$';
   }
 
+  // 3. Auto-close unclosed \[ or \(
+  const openBracketMatches = (str.match(/\\\[/g) || []).length;
+  const closeBracketMatches = (str.match(/\\\]/g) || []).length;
+  if (openBracketMatches > closeBracketMatches) {
+    str += '\\]';
+  }
+
+  const openParenMatches = (str.match(/\\\(/g) || []).length;
+  const closeParenMatches = (str.match(/\\\)/g) || []).length;
+  if (openParenMatches > closeParenMatches) {
+    str += '\\)';
+  }
+
   return str;
+}
+
+/**
+ * Checks whether a given cursor position is inside a math delimiter ($...$, $$...$$, \(...\), \[...\])
+ */
+export function isCursorInsideMath(text: string, pos: number): boolean {
+  if (!text || pos <= 0) return false;
+  const sub = text.substring(0, pos);
+
+  // Check unescaped dollar parity
+  let dollarCount = 0;
+  for (let i = 0; i < sub.length; i++) {
+    if (sub[i] === '$' && (i === 0 || sub[i - 1] !== '\\')) {
+      dollarCount++;
+    }
+  }
+  if (dollarCount % 2 === 1) return true;
+
+  // Check unclosed \( or \[
+  const lastOpenParen = sub.lastIndexOf('\\(');
+  const lastCloseParen = sub.lastIndexOf('\\)');
+  if (lastOpenParen !== -1 && lastOpenParen > lastCloseParen) return true;
+
+  const lastOpenBracket = sub.lastIndexOf('\\[');
+  const lastCloseBracket = sub.lastIndexOf('\\]');
+  if (lastOpenBracket !== -1 && lastOpenBracket > lastCloseBracket) return true;
+
+  return false;
+}
+
+/**
+ * Wraps bare mathematical expression in $...$ if not already delimited
+ */
+export function wrapInMathIfBare(str: string): string {
+  if (!str) return '';
+  const trimmed = str.trim();
+  if (
+    (trimmed.startsWith('$') && trimmed.endsWith('$')) ||
+    (trimmed.startsWith('\\(') && trimmed.endsWith('\\)')) ||
+    (trimmed.startsWith('\\[') && trimmed.endsWith('\\]'))
+  ) {
+    return trimmed;
+  }
+  return `$${trimmed}$`;
 }
 
 /**
@@ -73,17 +126,14 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
         const raw = match[0];
         const isBlockSegment = raw.startsWith('$$') || raw.startsWith('\\[');
         let math = '';
-        if (raw.startsWith('$$') || raw.startsWith('\\[')) {
+        if (raw.startsWith('$$') || raw.startsWith('\\[') || raw.startsWith('\\(')) {
           math = raw.slice(2, -2).trim();
         } else {
           math = raw.slice(1, -1).trim();
         }
 
         // Clean any double-escaped commands inside math snippet
-        math = math.replace(
-          /\\\\(vec|frac|sqrt|alpha|beta|gamma|delta|Delta|pi|theta|sigma|omega|lim|int|sum|prod|infty|le|ge|ne|approx|in|notin|subset|times|cdot|circ|pm|mp|iff|implies|to|quad|qquad|text|mathbf|mathrm|left|right)/g,
-          '\\$1'
-        );
+        math = math.replace(/\\\\([a-zA-Z]+|\\{|\\}|[,\.;])/g, '\\$1');
 
         try {
           const display = !inline && (isBlockSegment || isDisplayMode);

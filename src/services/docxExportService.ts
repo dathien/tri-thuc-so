@@ -39,11 +39,8 @@ export function cleanLatexForDocx(content: string): string {
 
   let text = content;
 
-  // 1. Normalize double-escaped backslashes before known LaTeX command names
-  text = text.replace(
-    /\\\\(vec|frac|sqrt|alpha|beta|gamma|delta|Delta|pi|theta|sigma|omega|lim|int|sum|prod|infty|le|ge|ne|approx|in|notin|subset|times|cdot|circ|pm|mp|iff|implies|to|quad|qquad|text|mathbf|mathrm|left|right)/g,
-    '\\$1'
-  );
+  // 1. Universal normalization of double-escaped backslashes
+  text = text.replace(/\\\\([a-zA-Z]+|\\{|\\}|[,\.;])/g, '\\$1');
 
   // 2. Vector arrows: Word OMML MathRun renders \u20D7 as top vector arrow accent
   text = text.replace(/\\vec\{([^{}]+)\}/g, '$1⃗');
@@ -52,6 +49,8 @@ export function cleanLatexForDocx(content: string): string {
   text = text.replace(/\\mathbb\{R\}/g, 'ℝ');
   text = text.replace(/\\mathbb\{Z\}/g, 'ℤ');
   text = text.replace(/\\mathbb\{N\}/g, 'ℕ');
+  text = text.replace(/\\mathbb\{Q\}/g, 'ℚ');
+  text = text.replace(/\\mathbb\{C\}/g, 'ℂ');
   text = text.replace(/\\pm/g, '±');
   text = text.replace(/\\le/g, '≤');
   text = text.replace(/\\ge/g, '≥');
@@ -77,6 +76,8 @@ export function cleanLatexForDocx(content: string): string {
   text = text.replace(/\\to/g, ' → ');
   text = text.replace(/\\perp/g, '⊥');
   text = text.replace(/\\parallel/g, '∥');
+  text = text.replace(/\\angle/g, '∠');
+  text = text.replace(/\\triangle/g, '△');
   text = text.replace(/\\quad/g, '  ');
   text = text.replace(/\\qquad/g, '   ');
   text = text.replace(/\\left\(/g, '(');
@@ -206,7 +207,7 @@ export function parseTextWithMathRuns(
 
     if (isBlockMath || isInlineMath) {
       let mathInner = '';
-      if (isBlockMath) {
+      if (seg.startsWith('$$') || seg.startsWith('\\[') || seg.startsWith('\\(')) {
         mathInner = seg.slice(2, -2).trim();
       } else {
         mathInner = seg.slice(1, -1).trim();
