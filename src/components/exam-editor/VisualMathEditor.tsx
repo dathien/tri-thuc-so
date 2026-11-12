@@ -181,10 +181,17 @@ export default function VisualMathEditor({ value, onChange, onFocus, placeholder
       onPaste={e => { e.preventDefault(); const text = e.clipboardData.getData('text/plain'); document.execCommand('insertText', false, text); }}
       style={{ minHeight: `${Math.max(2, rows) * 30}px`, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}
       className="w-full p-3.5 bg-white border border-slate-300 rounded-xl text-[16px] leading-[1.8] text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
-    <div className="flex items-center gap-2 flex-wrap">
-      <span className="rounded-lg px-3 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 text-[13px] font-semibold">Thanh công cụ toán học</span>
-      <span className="text-[12px] text-slate-500">Công thức hiển thị trực tiếp; nhấp vào công thức để sửa.</span>
+    <div role="note" aria-label="Hướng dẫn chỉnh sửa công thức" className="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-3 text-slate-800">
+      <div className="flex items-center gap-2 text-[14px] font-bold text-indigo-900">
+        <span aria-hidden="true" className="text-[18px]">☝</span>
+        <span>HƯỚNG DẪN CHỈNH SỬA CÔNG THỨC</span>
+      </div>
+      <p className="mt-1.5 text-[14px] leading-6">
+        Thầy cô hãy <strong className="text-indigo-900 underline underline-offset-2">nhấp trực tiếp vào công thức trong ô phía trên</strong> để chỉnh sửa số, ký hiệu hoặc biểu thức.
+      </p>
+      <p className="mt-1 text-[14px] leading-6">Muốn thêm công thức mới, hãy chọn công cụ phù hợp trên thanh công cụ toán học bên dưới.</p>
     </div>
+    <div className="text-[14px] font-bold text-indigo-900">Thanh công cụ toán học</div>
     {<div className="flex flex-wrap gap-1.5 rounded-xl border border-slate-200 p-2 bg-slate-50">{TEMPLATES.map(t => <button type="button" key={t.title} onMouseDown={e => e.preventDefault()} onClick={() => { if (!t.fields.length) insert(t.make([])); else open(t); }} className="px-2.5 py-1.5 text-[13px] font-medium rounded-lg bg-white border border-slate-200 hover:border-indigo-400">{t.label}</button>)}</div>}
     {template && <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-3 space-y-3" aria-label="Chỉnh sửa công thức">
       <div className="font-bold text-indigo-900 text-[14px]">{editing ? 'Chỉnh sửa công thức' : `Chèn ${template.title}`}</div>
