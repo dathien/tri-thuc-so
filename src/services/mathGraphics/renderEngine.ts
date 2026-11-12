@@ -3152,10 +3152,18 @@ export function exportGraphicToSvg(
       const toPxY = (y: number) => oy - y * scale;
 
       let pathD = '';
+      let wasInsidePlot = false;
       for (let px = 0; px <= width; px += 2) {
         const xVal = (px - ox) / scale;
         const py = toPxY(f(xVal));
-        pathD += (pathD === '' ? 'M ' : ' L ') + `${px.toFixed(1)} ${py.toFixed(1)}`;
+        // Clip to the plotting viewport: a cubic grows without bound and must
+        // never draw through the printed page outside its own figure.
+        if (Number.isFinite(py) && py >= marginY && py <= height - marginY) {
+          pathD += (pathD === '' || !wasInsidePlot ? 'M ' : ' L ') + `${px.toFixed(1)} ${py.toFixed(1)}`;
+          wasInsidePlot = true;
+        } else {
+          wasInsidePlot = false;
+        }
       }
 
       let pointsSvg = '';
@@ -3239,7 +3247,8 @@ export function exportGraphicToSvg(
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">
   <title>${title}</title>
+  <defs><clipPath id="graphic-print-clip"><rect x="0" y="0" width="${width}" height="${height}" /></clipPath></defs>
   <rect width="${width}" height="${height}" fill="#ffffff" />
-  ${content}
+  <g clip-path="url(#graphic-print-clip)">${content}</g>
 </svg>`;
 }
