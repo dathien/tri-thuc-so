@@ -32,6 +32,11 @@ export const pdfExportService = {
     * {
       box-sizing: border-box;
     }
+    .preview-toolbar { display:flex; align-items:center; gap:10px; padding:12px 18px; background:#f1f5f9; border-bottom:1px solid #cbd5e1; font: 14px Arial,sans-serif; position:sticky; top:0; z-index:9999; }
+    .preview-toolbar button { cursor:pointer; border:1px solid #94a3b8; border-radius:6px; background:white; padding:9px 14px; font:inherit; }
+    .preview-toolbar button:first-of-type { background:#1d4ed8; border-color:#1d4ed8; color:white; }
+    .preview-toolbar .hint { color:#475569; font-size:12px; margin-left:auto; }
+    @media print { .preview-toolbar { display:none !important; } }
     body {
       font-family: 'Times New Roman', Times, serif;
       font-size: 13pt;
@@ -151,8 +156,8 @@ export const pdfExportService = {
     .question-graphic-print {
       display: block;
       width: 100%;
-      max-width: 155mm;
-      margin: 8px auto 12px;
+      max-width: 135mm;
+      margin: 5mm auto 6mm;
       text-align: center;
       break-inside: avoid;
       page-break-inside: avoid;
@@ -161,13 +166,13 @@ export const pdfExportService = {
     .question-graphic-print svg,
     .question-graphic-print img {
       display: block;
-      width: auto;
+      width: 100%;
       height: auto;
-      max-width: 100%;
-      max-height: 95mm;
+      max-width: 135mm;
+      max-height: 90mm;
       object-fit: contain;
       margin: 0 auto;
-      overflow: visible;
+      overflow: hidden;
     }
     .text-center { text-align: center !important; }
     .text-right { text-align: right !important; }
@@ -177,6 +182,11 @@ export const pdfExportService = {
   </style>
 </head>
 <body>
+  <nav class="preview-toolbar" aria-label="Công cụ xem trước bản in">
+    <button type="button" onclick="window.print()">In / Lưu PDF</button>
+    <button type="button" onclick="window.close()">Đóng tab</button>
+    <span class="hint">Để tải PDF, chọn “Lưu dưới dạng PDF” trong hộp thoại in.</span>
+  </nav>
   ${!isGuideOnly ? `
   <!-- HEADER -->
   <table class="header-table">
@@ -387,35 +397,23 @@ export const pdfExportService = {
     printWindow.document.write(html);
     printWindow.document.close();
 
-    // Wait for KaTeX to render before printing
-    setTimeout(() => {
-      printWindow.focus();
-      printWindow.print();
-    }, 800);
+    // Open preview only. Printing is initiated by the teacher from the new tab.
+    printWindow.focus();
   },
 };
 
 function renderQuestionGraphicHtml(graphics?: MathGraphicConfig): string {
   if (!graphics) return '';
   const wrap = (content: string) => `<figure class="question-graphic-print">${content}</figure>`;
-  // Oxyz must be re-rendered with the current auto-fit engine: cached images/SVGs
-  // can contain clipping baked into the old bitmap, which CSS cannot repair.
-  if (graphics.type === 'space_3d_oxyz') {
-    try {
-      return wrap(exportGraphicToSvg(graphics, 720, 480));
-    } catch {
-      // Continue to the saved representation if the live renderer is unavailable.
-    }
-  }
-  if (graphics.exportedImageData) {
-    return wrap(`<img src="${escapeHtml(graphics.exportedImageData)}" alt="Hình minh họa toán học" />`);
-  }
-  if (graphics.svgData) {
-    return wrap(graphics.svgData);
-  }
+  // Always regenerate from the actual configuration. Saved SVG/image previews may
+  // have an old viewport or out-of-bounds curves that break print layout.
   try {
-    return wrap(exportGraphicToSvg(graphics, 720, 480));
+    return wrap(exportGraphicToSvg(graphics, 640, 400));
   } catch {
+    if (graphics.exportedImageData) {
+      return wrap(`<img src="${escapeHtml(graphics.exportedImageData)}" alt="Hình minh họa toán học" />`);
+    }
+    if (graphics.svgData) return wrap(graphics.svgData);
     return '';
   }
 }
