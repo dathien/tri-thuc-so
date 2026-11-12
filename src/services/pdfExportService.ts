@@ -16,13 +16,15 @@ export const pdfExportService = {
     const isStudentOnly = type === 'student_exam';
     const isGuideOnly = type === 'grading_guide';
     const isFull = type === 'full_bundle';
+    const printableQuestions = bundle.variants?.find(v => v.code === variantCode)?.questions ?? bundle.questions;
+    const countByPart = (part: number) => printableQuestions.filter(q => q.part === part).length;
 
     return `
 <!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>${bundle.title} - Mã đề ${variantCode}</title>
+  <title>${escapeHtml(bundle.title)} - Mã đề ${escapeHtml(variantCode)}</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
   <style>
     @page {
@@ -86,7 +88,10 @@ export const pdfExportService = {
       font-weight: normal;
     }
     .question-item {
+      clear: both;
+      overflow-wrap: anywhere;
       margin-bottom: 12px;
+      break-inside: avoid;
       page-break-inside: avoid;
     }
     .question-title {
@@ -96,16 +101,19 @@ export const pdfExportService = {
     .options-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 4px 16px;
+      gap: 5px 12px;
       margin-top: 4px;
-      margin-left: 16px;
+      margin-left: 8px;
+      break-inside: avoid;
     }
     .subitem-list {
       margin-top: 4px;
       margin-left: 20px;
     }
     .subitem-row {
-      margin-bottom: 3px;
+      margin-bottom: 6px;
+      clear: both;
+      break-inside: avoid;
     }
     .short-ans-box {
       margin-top: 4px;
@@ -156,7 +164,7 @@ export const pdfExportService = {
     .question-graphic-print {
       display: block;
       width: 100%;
-      max-width: 135mm;
+      max-width: 125mm;
       margin: 5mm auto 6mm;
       text-align: center;
       break-inside: avoid;
@@ -168,12 +176,16 @@ export const pdfExportService = {
       display: block;
       width: 100%;
       height: auto;
-      max-width: 135mm;
-      max-height: 90mm;
+      max-width: 125mm;
+      max-height: 80mm;
       object-fit: contain;
       margin: 0 auto;
       overflow: hidden;
     }
+    .question-content, .option-text, .subitem-text { white-space: normal; overflow-wrap: anywhere; }
+    .question-content .katex, .option-text .katex, .subitem-text .katex { white-space: nowrap; }
+    .section-title .section-desc { display: block; margin-top: 3px; line-height: 1.5; }
+    .header-table, .question-item, .subitem-row, .question-graphic-print { break-inside: avoid; }
     .text-center { text-align: center !important; }
     .text-right { text-align: right !important; }
     @media print {
@@ -194,11 +206,11 @@ export const pdfExportService = {
       <td class="header-left">
         <div class="bold uppercase" style="font-size: 11.5pt;">${bundle.schoolName ? escapeHtml(bundle.schoolName) : 'TRƯỜNG THPT'}</div>
         <div class="bold" style="font-size: 11.5pt;">TỔ TOÁN - TIN HỌC</div>
-        <div class="italic" style="font-size: 10.5pt; margin-top: 4px;">(Đề thi gồm có 22 câu / 4 trang)</div>
+        <div class="italic" style="font-size: 10.5pt; margin-top: 4px;">(Đề thi gồm ${printableQuestions.length} câu)</div>
       </td>
       <td class="header-right">
-        <div class="bold uppercase" style="font-size: 12.5pt;">${bundle.title}</div>
-        <div class="bold" style="font-size: 11.5pt;">NĂM HỌC 2025 - 2026</div>
+        <div class="bold uppercase" style="font-size: 12.5pt;">${escapeHtml(bundle.title)}</div>
+        <div class="bold" style="font-size: 11.5pt;">NĂM HỌC ${escapeHtml(bundle.academicYear || '2025 - 2026')}</div>
         <div class="italic" style="font-size: 11pt;">Thời gian làm bài: ${bundle.durationMinutes} phút (không kể phát đề)</div>
         <div class="bold" style="font-size: 12pt; margin-top: 4px;">MÃ ĐỀ THI: ${variantCode}</div>
       </td>
@@ -213,19 +225,19 @@ export const pdfExportService = {
   <!-- PART I -->
   <div class="section-title">
     PHẦN I. Câu trắc nghiệm nhiều phương án lựa chọn.
-    <span class="section-desc">(Thí sinh trả lời từ câu 1 đến câu 12. Mỗi câu hỏi chỉ chọn một phương án).</span>
+    <span class="section-desc">(Thí sinh trả lời từ câu 1 đến câu ${countByPart(1)}. Mỗi câu hỏi chỉ chọn một phương án).</span>
   </div>
 
-  ${bundle.questions
+  ${printableQuestions
     .filter((q) => q.part === 1)
     .map((q, idx) => `
       <div class="question-item">
         <span class="question-title">Câu ${idx + 1}: </span>
-        <span>${formatLatexForPdf(q.content)}</span>
+        <span class="question-content">${formatLatexForPdf(q.content)}</span>
         ${renderQuestionGraphicHtml(q.graphics)}
         <div class="options-grid">
           ${(q.options || [])
-            .map((opt, i) => `<div><strong>${String.fromCharCode(65 + i)}.</strong> ${formatLatexForPdf(opt)}</div>`)
+            .map((opt, i) => `<div class="option-text"><strong>${String.fromCharCode(65 + i)}.</strong> ${formatLatexForPdf(opt)}</div>`)
             .join('')}
         </div>
       </div>
@@ -235,22 +247,21 @@ export const pdfExportService = {
   <!-- PART II -->
   <div class="section-title">
     PHẦN II. Câu trắc nghiệm đúng sai.
-    <span class="section-desc">(Thí sinh trả lời từ câu 1 đến câu 4. Trong mỗi ý a), b), c), d) ở mỗi câu, thí sinh chọn đúng hoặc sai).</span>
+    <span class="section-desc">(Thí sinh trả lời từ câu 1 đến câu ${countByPart(2)}. Trong mỗi ý a), b), c), d) ở mỗi câu, thí sinh chọn đúng hoặc sai).</span>
   </div>
 
-  ${bundle.questions
+  ${printableQuestions
     .filter((q) => q.part === 2)
     .map((q, idx) => `
       <div class="question-item">
         <span class="question-title">Câu ${idx + 1}: </span>
-        <span>${formatLatexForPdf(q.content)}</span>
+        <span class="question-content">${formatLatexForPdf(q.content)}</span>
         ${renderQuestionGraphicHtml(q.graphics)}
         <div class="subitem-list">
           ${(q.subItems || [])
             .map((sub) => `
               <div class="subitem-row">
-                <strong>${sub.label})</strong> ${formatLatexForPdf(sub.content)}
-                <span style="float: right; margin-right: 20px;">[ ] Đúng &nbsp;&nbsp;&nbsp; [ ] Sai</span>
+                <strong>${sub.label})</strong> <span class="subitem-text">${formatLatexForPdf(sub.content)}</span>
               </div>
             `)
             .join('')}
@@ -262,15 +273,15 @@ export const pdfExportService = {
   <!-- PART III -->
   <div class="section-title">
     PHẦN III. Câu trắc nghiệm trả lời ngắn.
-    <span class="section-desc">(Thí sinh trả lời từ câu 1 đến câu 6. Viết kết quả vào ô trả lời tương ứng).</span>
+    <span class="section-desc">(Thí sinh trả lời từ câu 1 đến câu ${countByPart(3)}. Viết kết quả vào ô trả lời tương ứng).</span>
   </div>
 
-  ${bundle.questions
+  ${printableQuestions
     .filter((q) => q.part === 3)
     .map((q, idx) => `
       <div class="question-item">
         <span class="question-title">Câu ${idx + 1}: </span>
-        <span>${formatLatexForPdf(q.content)}</span>
+        <span class="question-content">${formatLatexForPdf(q.content)}</span>
         ${renderQuestionGraphicHtml(q.graphics)}
         <div class="short-ans-box">
           Đáp số: ........................................................................................
@@ -366,12 +377,17 @@ export const pdfExportService = {
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
   <script>
     document.addEventListener("DOMContentLoaded", function() {
+      if (typeof renderMathInElement !== 'function') {
+        const hint = document.querySelector('.preview-toolbar .hint');
+        if (hint) hint.textContent = 'Không tải được bộ hiển thị công thức. Vui lòng kiểm tra kết nối trước khi in.';
+        return;
+      }
       renderMathInElement(document.body, {
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '$', right: '$', display: false},
-          {left: '\\[', right: '\\]', display: true},
-          {left: '\\(', right: '\\)', display: false}
+          {left: '\\\\[', right: '\\\\]', display: true},
+          {left: '\\\\(', right: '\\\\)', display: false}
         ],
         throwOnError: false
       });
@@ -428,6 +444,9 @@ function escapeHtml(text: string): string {
 
 function formatLatexForPdf(text: string): string {
   if (!text) return '';
-  const normalized = normalizeLatexString(text);
+  const normalized = normalizeLatexString(String(text))
+    .replace(/\bundefined\b(?=\s*(?:[.。]|$))/gi, '')
+    .replace(/\$\s*\$/g, '')
+    .replace(/\s{2,}/g, ' ');
   return escapeHtml(normalized);
 }
