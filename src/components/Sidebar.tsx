@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   LayoutDashboard,
   Users,
@@ -16,10 +16,10 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Sparkles,
 } from 'lucide-react';
 import { UserRole } from '../types';
-import { soundService } from '../utils/audio';
 
 export type SectionKey =
   | 'overview'
@@ -185,9 +185,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onCloseMobileMenu,
 }) => {
   const visibleItems = SIDEBAR_ITEMS.filter((item) => item.roles.includes(userRole));
+  type MenuGroup = SidebarItem['group'];
+  const groupOrder: MenuGroup[] = ['main', 'assessment', 'interactive', 'system'];
+  const groupLabels: Record<MenuGroup, string> = {
+    main: 'Tổng quan & Lớp học',
+    assessment: 'Đề thi & Đánh giá',
+    interactive: 'Khám phá & Luyện tập',
+    system: 'Hệ thống',
+  };
+  const activeGroup = visibleItems.find((item) => item.key === currentSection)?.group ?? 'main';
+  const [expandedGroups, setExpandedGroups] = useState<MenuGroup[]>([activeGroup]);
+
+  // Khi chuyển trang từ nơi khác, tự mở nhóm chứa mục đang sử dụng.
+  useEffect(() => {
+    setExpandedGroups((previous) =>
+      previous.includes(activeGroup) ? previous : [...previous, activeGroup]
+    );
+  }, [activeGroup]);
+
+  const toggleGroup = (group: MenuGroup) => {
+    setExpandedGroups((previous) =>
+      previous.includes(group)
+        ? previous.filter((item) => item !== group)
+        : [...previous, group]
+    );
+  };
 
   const handleSelect = (key: SectionKey) => {
-    soundService.playClick();
     onSelectSection(key);
     onCloseMobileMenu();
   };
@@ -237,72 +261,68 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
         </div>
 
-        {/* Navigation Items List with clean overflow-y */}
-        <div className="sidebar-menu flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2.5 py-3 space-y-1">
-          {/* Section: Giảng dạy & Đánh giá */}
-          {!isCollapsed && (
-            <div className="px-3 pt-1 pb-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              {userRole === 'teacher' ? 'Dạy học & Khảo thí' : 'Nhiệm vụ học tập'}
-            </div>
-          )}
-
-          {visibleItems.map((item, index) => {
-            const isActive = currentSection === item.key;
-            const Icon = item.icon;
-
-            // Optional Divider before interactive activities
-            const showSubheader =
-              !isCollapsed &&
-              item.group === 'interactive' &&
-              visibleItems[index - 1]?.group !== 'interactive';
-
+        {/* Các nhóm chức năng có thể thu gọn; không ẩn hoặc xóa mục nào. */}
+        <nav aria-label="Điều hướng chức năng" className="sidebar-menu flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2.5 py-2 space-y-1.5">
+          {groupOrder.map((group) => {
+            const items = visibleItems.filter((item) => item.group === group);
+            if (items.length === 0) return null;
+            const isExpanded = isCollapsed || expandedGroups.includes(group);
+            const containsActive = items.some((item) => item.key === currentSection);
             return (
-              <React.Fragment key={item.key}>
-                {showSubheader && (
-                  <div className="px-3 pt-3 pb-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                    Không gian Khám phá Toán
-                  </div>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => handleSelect(item.key)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-[14px] sm:text-[15px] font-semibold transition-all duration-150 group ${
-                    isActive
-                      ? 'bg-indigo-50 text-indigo-700 shadow-xs border border-indigo-200/60'
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                  }`}
-                  title={isCollapsed ? item.label : undefined}
-                >
-                  <div
-                    className={`shrink-0 p-1 rounded-lg transition-colors ${
-                      isActive
-                        ? 'text-indigo-600 bg-white shadow-2xs'
-                        : 'text-slate-400 group-hover:text-slate-600'
+              <div key={group} className="rounded-xl border border-slate-100 bg-white">
+                {!isCollapsed && (
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(group)}
+                    aria-expanded={isExpanded}
+                    aria-controls={`sidebar-group-${group}`}
+                    className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-left text-[12px] font-bold transition-colors ${
+                      containsActive ? 'text-indigo-700 bg-indigo-50/70' : 'text-slate-600 hover:bg-slate-50'
                     }`}
                   >
-                    <Icon className="w-5 h-5" />
-                  </div>
-
-                  {!isCollapsed && (
-                    <div className="flex-1 flex items-center justify-between min-w-0">
-                      <span className="truncate">{item.label}</span>
-                      {item.badge && (
-                        <span
-                          className={`text-[11px] px-1.5 py-0.5 rounded-md shrink-0 font-medium ${
-                            item.badgeColor || 'bg-slate-100 text-slate-600'
-                          }`}
-                        >
-                          {item.badge}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </button>
-              </React.Fragment>
+                    <span>{groupLabels[group]}</span>
+                    <span className="flex items-center gap-2 shrink-0">
+                      <span className="text-[10px] font-semibold text-slate-400">{items.length}</span>
+                      <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                    </span>
+                  </button>
+                )}
+                <div id={`sidebar-group-${group}`} className={isExpanded ? 'px-1 pb-1 space-y-0.5' : 'hidden'}>
+                  {items.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = currentSection === item.key;
+                    return (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => handleSelect(item.key)}
+                        aria-current={isActive ? 'page' : undefined}
+                        title={isCollapsed ? item.label : undefined}
+                        className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-[13px] font-medium transition-colors ${
+                          isActive
+                            ? 'bg-indigo-100 text-indigo-800 ring-1 ring-indigo-200 font-semibold'
+                            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                        }`}
+                      >
+                        <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-indigo-700' : 'text-slate-400'}`} />
+                        {!isCollapsed && (
+                          <>
+                            <span className="min-w-0 flex-1 leading-snug break-words">{item.label}</span>
+                            {item.badge && (
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded shrink-0 ${item.badgeColor || 'bg-slate-100 text-slate-600'}`}>
+                                {item.badge}
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             );
           })}
-        </div>
+        </nav>
 
         {/* Sidebar Footer */}
         <div className="p-3 border-t border-slate-100 bg-slate-50/50">
