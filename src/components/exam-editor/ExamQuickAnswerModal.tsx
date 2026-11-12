@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Question } from '../../types';
 import MathRenderer from '../MathRenderer';
+import VisualMathEditor from './VisualMathEditor';
 import { soundService } from '../../utils/audio';
 
 interface ExamQuickAnswerModalProps {
@@ -96,10 +97,10 @@ export const ExamQuickAnswerModal: React.FC<ExamQuickAnswerModalProps> = ({
   const p3Questions = localQuestions.filter((q) => q.part === 3 || q.questionType === 'short_answer');
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95">
+    <div className="fixed inset-0 z-50 bg-slate-50 overflow-hidden flex flex-col">
+      <div className="bg-white w-full h-full flex flex-col">
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between gap-3 bg-slate-50 rounded-t-2xl">
+        <div className="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between gap-3 bg-slate-50 ">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-indigo-100 text-indigo-700">
               <Key className="w-5 h-5" />
@@ -163,7 +164,7 @@ export const ExamQuickAnswerModal: React.FC<ExamQuickAnswerModalProps> = ({
         </div>
 
         {/* Body */}
-        <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4 text-xs">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4 text-sm max-w-6xl w-full mx-auto">
           {/* TAB 1: MCQ */}
           {activeTab === 1 && (
             <div className="space-y-3">
@@ -220,12 +221,12 @@ export const ExamQuickAnswerModal: React.FC<ExamQuickAnswerModalProps> = ({
                         })}
 
                         <div className="flex-1 ml-3">
-                          <input
-                            type="text"
+                          <VisualMathEditor
+                            editorId={`answer-explanation-${q.id}`}
                             value={q.explanation || ''}
-                            onChange={(e) => handleUpdateExplanation(globalIdx, e.target.value)}
+                            onChange={(value) => handleUpdateExplanation(globalIdx, value)}
                             placeholder="Lời giải tóm tắt..."
-                            className="w-full px-2.5 py-1 rounded-lg border border-slate-200 bg-white text-[11px]"
+                            rows={2}
                           />
                         </div>
                       </div>
@@ -278,13 +279,13 @@ export const ExamQuickAnswerModal: React.FC<ExamQuickAnswerModalProps> = ({
                       </div>
 
                       <div className="pt-1">
-                        <input
-                          type="text"
-                          value={q.explanation || ''}
-                          onChange={(e) => handleUpdateExplanation(globalIdx, e.target.value)}
-                          placeholder="Hướng dẫn chấm chi tiết từng ý..."
-                          className="w-full px-2.5 py-1 rounded-lg border border-slate-200 bg-white text-[11px]"
-                        />
+                        <VisualMathEditor
+                            editorId={`answer-explanation-${q.id}`}
+                            value={q.explanation || ''}
+                            onChange={(value) => handleUpdateExplanation(globalIdx, value)}
+                            placeholder="Hướng dẫn chấm chi tiết từng ý..."
+                            rows={2}
+                          />
                       </div>
                     </div>
                   );
@@ -315,23 +316,23 @@ export const ExamQuickAnswerModal: React.FC<ExamQuickAnswerModalProps> = ({
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         <div>
                           <label className="text-[10px] font-bold text-slate-500 block mb-0.5">Đáp số chuẩn:</label>
-                          <input
-                            type="text"
+                          <VisualMathEditor
+                            editorId={`short-answer-${q.id}`}
                             value={String(q.correctAnswer || '')}
-                            onChange={(e) => handleUpdateShortAnswer(globalIdx, e.target.value)}
-                            placeholder="Ví dụ: 3/4 hoặc 0.75"
-                            className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white font-mono font-bold text-indigo-700"
+                            onChange={(value) => handleUpdateShortAnswer(globalIdx, value)}
+                            placeholder="Nhập đáp số hoặc chọn ký hiệu toán học"
+                            rows={1}
                           />
                         </div>
 
                         <div className="sm:col-span-2">
                           <label className="text-[10px] font-bold text-slate-500 block mb-0.5">Lời giải / Đáp án chi tiết:</label>
-                          <input
-                            type="text"
+                          <VisualMathEditor
+                            editorId={`answer-explanation-${q.id}`}
                             value={q.explanation || ''}
-                            onChange={(e) => handleUpdateExplanation(globalIdx, e.target.value)}
+                            onChange={(value) => handleUpdateExplanation(globalIdx, value)}
                             placeholder="Các bước tính toán tóm tắt..."
-                            className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white"
+                            rows={2}
                           />
                         </div>
                       </div>
@@ -344,7 +345,7 @@ export const ExamQuickAnswerModal: React.FC<ExamQuickAnswerModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 sm:p-5 border-t border-slate-200 bg-slate-50 flex items-center justify-between gap-3 rounded-b-2xl">
+        <div className="p-4 sm:p-5 border-t border-slate-200 bg-slate-50 flex items-center justify-between gap-3 ">
           <span className="text-xs text-slate-500">
             * Thay đổi đáp án sẽ được cập nhật đồng thời vào bảng tra cứu và tài liệu xuất Word/PDF.
           </span>
@@ -355,7 +356,7 @@ export const ExamQuickAnswerModal: React.FC<ExamQuickAnswerModalProps> = ({
               onClick={onClose}
               className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 font-semibold text-xs"
             >
-              Hủy bỏ
+              Quay lại không lưu
             </button>
             <button
               type="button"
