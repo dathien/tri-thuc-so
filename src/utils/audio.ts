@@ -5,14 +5,14 @@
 
 class SoundService {
   private ctx: AudioContext | null = null;
-  private soundEnabled: boolean = true;
+  private soundEnabled: boolean = false;
 
   constructor() {
     // Loaded state from localStorage if available
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('edutest_sound_enabled');
       if (stored !== null) {
-        this.soundEnabled = stored === 'true';
+        this.soundEnabled = false;
       }
     }
   }
@@ -34,7 +34,7 @@ class SoundService {
   }
 
   public toggleSound(): boolean {
-    this.soundEnabled = !this.soundEnabled;
+    this.soundEnabled = false;
     if (typeof window !== 'undefined') {
       localStorage.setItem('edutest_sound_enabled', String(this.soundEnabled));
     }
@@ -45,7 +45,7 @@ class SoundService {
   }
 
   public setSound(enabled: boolean) {
-    this.soundEnabled = enabled;
+    this.soundEnabled = false;
     if (typeof window !== 'undefined') {
       localStorage.setItem('edutest_sound_enabled', String(this.soundEnabled));
     }
