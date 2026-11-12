@@ -99,11 +99,15 @@ function parseEditableFormula(source: string): { kind: string; fields: string[] 
       if (inside) return { kind: 'root', fields: [simpleText(source.slice(0, sqrtIndex)), simpleText(inside.content), simpleText(source.slice(inside.end))] };
     }
   }
+  // Khoảng/đoạn: (2;+\\infty), [-1;3], ...; chỉnh từng đầu mút và dấu ngoặc.
+  const interval = source.trim().match(/^([([])\s*(.*?)\s*([;,])\s*(.*?)\s*([)\]])$/);
+  if (interval) return { kind: 'interval', fields: [interval[1], simpleText(interval[2]), simpleText(interval[4]), interval[5], interval[3]] };
   if (!source.includes('\\') && !/[{}]/.test(source)) return { kind: 'plain', fields: [simpleText(source)] };
   return null;
 }
 function makeEditableFormula(kind: string, fields: string[]): string {
   if (kind === 'fraction') return `${toLatexText(fields[0])}\\frac{${toLatexText(fields[1])}}{${toLatexText(fields[2])}}${toLatexText(fields[3])}`;
+  if (kind === 'interval') return `${fields[0]}${toLatexText(fields[1])}${fields[4] || ';'}${toLatexText(fields[2])}${fields[3]}`;
   if (kind === 'root') return `${toLatexText(fields[0])}\\sqrt{${toLatexText(fields[1])}}${toLatexText(fields[2])}`;
   return toLatexText(fields[0] || '');
 }
@@ -185,8 +189,13 @@ export default function VisualMathEditor({ value, onChange, onFocus, placeholder
     {showTools && <div className="flex flex-wrap gap-1.5 rounded-xl border border-slate-200 p-2 bg-slate-50">{TEMPLATES.map(t => <button type="button" key={t.title} onMouseDown={e => e.preventDefault()} onClick={() => { if (!t.fields.length) insert(t.make([])); else open(t); }} className="px-2.5 py-1.5 text-[13px] font-medium rounded-lg bg-white border border-slate-200 hover:border-indigo-400">{t.label}</button>)}</div>}
     {template && <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-3 space-y-3" aria-label="Chỉnh sửa công thức">
       <div className="font-bold text-indigo-900 text-[14px]">{editing ? 'Chỉnh sửa công thức' : `Chèn ${template.title}`}</div>
-      {uneditable ? <div className="text-[13px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2">Công thức cũ có cấu trúc phức tạp. Để giữ nguyên công thức, hãy chọn mẫu mới trên thanh công cụ hoặc nhấn Hủy. Không cần nhập mã kỹ thuật.</div> : <div className="text-[12px] text-slate-600">Chạm vào từng ô để sửa trực tiếp. Không cần gõ lệnh công thức.</div>}
-      {!uneditable && visualKind === 'fraction' ? <div className="rounded-lg bg-white p-3 border border-indigo-100 flex items-center justify-center gap-2 flex-wrap">
+      {uneditable ? <div className="text-[13px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2">Chưa thể sửa công thức này bằng các ô nhập. Thầy cô có thể nhấn Hủy để giữ nguyên, hoặc chọn một mẫu trên thanh công cụ để thay thế.</div> : <div className="text-[12px] text-slate-600">Chọn ô cần thay đổi, nhập giá trị mới rồi nhấn Lưu công thức.</div>}
+      {!uneditable && visualKind === 'interval' ? <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 rounded-lg bg-white p-3 border border-indigo-100">
+        <label className="text-xs text-slate-700">Dấu đầu<select aria-label="Dấu đầu khoảng" className="block w-full mt-1 p-2 border rounded" value={fields[0]} onChange={e => setFields(a => a.map((v,i) => i === 0 ? e.target.value : v))}><option value="(">( Mở</option><option value="[">[ Đóng</option></select></label>
+        <label className="text-xs text-slate-700">Đầu mút trái<input aria-label="Đầu mút trái" className="block w-full mt-1 p-2 border rounded" value={fields[1]} onChange={e => setFields(a => a.map((v,i) => i === 1 ? e.target.value : v))}/></label>
+        <label className="text-xs text-slate-700">Đầu mút phải<input aria-label="Đầu mút phải" className="block w-full mt-1 p-2 border rounded" value={fields[2]} onChange={e => setFields(a => a.map((v,i) => i === 2 ? e.target.value : v))}/><span className="block mt-1">Có thể nhập ∞, +∞ hoặc −∞</span></label>
+        <label className="text-xs text-slate-700">Dấu cuối<select aria-label="Dấu cuối khoảng" className="block w-full mt-1 p-2 border rounded" value={fields[3]} onChange={e => setFields(a => a.map((v,i) => i === 3 ? e.target.value : v))}><option value=")">) Mở</option><option value="]">] Đóng</option></select></label>
+      </div> : !uneditable && visualKind === 'fraction' ? <div className="rounded-lg bg-white p-3 border border-indigo-100 flex items-center justify-center gap-2 flex-wrap">
         <input aria-label="Biểu thức trước phân số" placeholder="Trước phân số (ví dụ: y =)" className="w-24 min-w-0 p-2 border rounded text-center" value={fields[0] || ''} onChange={e => setFields(a => a.map((v,i) => i === 0 ? e.target.value : v))}/>
         <div className="inline-flex flex-col items-stretch min-w-28 gap-1">
           <input aria-label="Tử số" placeholder="Tử số" className="w-full p-2 border rounded text-center" value={fields[1] || ''} onChange={e => setFields(a => a.map((v,i) => i === 1 ? e.target.value : v))}/>
@@ -197,8 +206,8 @@ export default function VisualMathEditor({ value, onChange, onFocus, placeholder
       </div> : !uneditable && visualKind === 'root' ? <div className="flex gap-2 items-center flex-wrap bg-white rounded-lg p-3">
         {['Trước căn', 'Biểu thức dưới căn', 'Sau căn'].map((name,i) => <label key={name} className="text-xs flex-1 min-w-28">{name}<input className="block w-full p-2 border rounded mt-1" value={fields[i] || ''} onChange={e => setFields(a => a.map((v,j) => i === j ? e.target.value : v))}/></label>)}
       </div> : !uneditable && <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">{(visualKind === 'plain' ? ['Biểu thức'] : template.fields).map((name, i) => <label key={i} className="text-[13px] text-slate-700">{name}<input className="block w-full mt-1 p-2 border rounded-lg bg-white" value={fields[i] || ''} onChange={e => setFields(old => old.map((v,j) => i === j ? e.target.value : v))}/></label>)}</div>}
-      <div className="min-h-10 p-2 rounded-lg bg-white border border-indigo-100 text-center text-lg">{valid && !uneditable ? <span dangerouslySetInnerHTML={{ __html: katex.renderToString(preview, { throwOnError: false }) }} /> : <span className="text-rose-600 text-sm">Biểu thức chưa hợp lệ</span>}</div>
-      <div className="flex gap-2"><button type="button" disabled={!valid || uneditable} onClick={() => insert(preview)} className="bg-indigo-600 disabled:opacity-40 text-white px-4 py-2 rounded-lg text-sm font-bold">{editing ? 'Cập nhật công thức' : 'Chèn vào nội dung'}</button><button type="button" onClick={() => { setTemplate(null); setEditing(null); }} className="bg-white border px-4 py-2 rounded-lg text-sm">Hủy</button>{editing && <button type="button" onClick={() => { editing.remove(); emit(); setEditing(null); setTemplate(null); }} className="text-rose-600 border border-rose-200 px-3 py-2 rounded-lg text-sm">Xóa công thức</button>}</div>
+      <div className="min-h-10 p-2 rounded-lg bg-white border border-indigo-100 text-center text-lg">{uneditable ? <span className="text-slate-700 text-sm">Công thức hiện tại vẫn được giữ nguyên.</span> : valid ? <span dangerouslySetInnerHTML={{ __html: katex.renderToString(preview, { throwOnError: false }) }} /> : <span className="text-amber-700 text-sm">Vui lòng kiểm tra các ô vừa nhập để xem trước công thức.</span>}</div>
+      <div className="flex gap-2"><button type="button" disabled={!valid || uneditable} onClick={() => insert(preview)} className="bg-indigo-600 disabled:opacity-40 text-white px-4 py-2 rounded-lg text-sm font-bold">{editing ? 'Lưu công thức' : 'Chèn vào nội dung'}</button><button type="button" onClick={() => { setTemplate(null); setEditing(null); }} className="bg-white border px-4 py-2 rounded-lg text-sm">Hủy</button>{editing && <button type="button" onClick={() => { editing.remove(); emit(); setEditing(null); setTemplate(null); }} className="text-rose-600 border border-rose-200 px-3 py-2 rounded-lg text-sm">Xóa công thức</button>}</div>
     </div>}
   </div>;
 }
