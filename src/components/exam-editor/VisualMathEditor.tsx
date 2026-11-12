@@ -44,7 +44,9 @@ const TEMPLATES: { label: string; title: string; make: (fields: string[]) => str
   { label: 'Tích phân', title: 'Tích phân', fields: ['Cận dưới','Cận trên','Hàm số','Biến'], defaults: ['a','b','f(x)','x'], make: a => `\\int_{${a[0]}}^{${a[1]}} ${a[2]}\\,d${a[3]}` },
   { label: 'Tổng', title: 'Tổng', fields: ['Chỉ số bắt đầu','Chỉ số kết thúc','Biểu thức'], defaults: ['i=1','n','a_i'], make: a => `\\sum_{${a[0]}}^{${a[1]}} ${a[2]}` },
   { label: 'Tập số thực', title: 'Tập số thực', fields: [], defaults: [], make: () => '\\mathbb{R}' },
-  { label: 'Vô cực', title: 'Vô cực', fields: [], defaults: [], make: () => '\\infty' },
+  { label: '∞', title: 'Vô cực', fields: [], defaults: [], make: () => '\\infty' },
+  { label: '+∞', title: 'Dương vô cực', fields: [], defaults: [], make: () => '+\\infty' },
+  { label: '−∞', title: 'Âm vô cực', fields: [], defaults: [], make: () => '-\\infty' },
   { label: '≤', title: 'Nhỏ hơn hoặc bằng', fields: [], defaults: [], make: () => '\\leq' },
   { label: '≥', title: 'Lớn hơn hoặc bằng', fields: [], defaults: [], make: () => '\\geq' },
   { label: '≠', title: 'Khác', fields: [], defaults: [], make: () => '\\ne' },
@@ -126,6 +128,12 @@ export default function VisualMathEditor({ value, onChange, onFocus, placeholder
     <div className="flex items-center gap-2 flex-wrap">
       <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => setShowTools(v => !v)} className="rounded-lg px-3 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 text-[13px] font-semibold">{showTools ? 'Ẩn công cụ toán' : '+ Chèn công thức toán'}</button>
       <span className="text-[12px] text-slate-500">Công thức hiển thị trực tiếp; nhấp vào công thức để sửa.</span>
+    </div>
+    <div className="flex flex-wrap items-center gap-1.5" aria-label="Chèn nhanh ký hiệu vô cực">
+      <span className="text-[12px] text-slate-600 mr-1">Chèn nhanh:</span>
+      {([{ label: '∞', formula: '\\infty' }, { label: '+∞', formula: '+\\infty' }, { label: '−∞', formula: '-\\infty' }]).map(item =>
+        <button type="button" key={item.label} title={`Chèn ${item.label} tại vị trí con trỏ`} onMouseDown={e => e.preventDefault()} onClick={() => insert(item.formula)} className="min-w-10 px-2.5 py-1.5 text-[16px] font-semibold rounded-lg bg-white border border-indigo-200 text-indigo-800 hover:bg-indigo-50">{item.label}</button>
+      )}
     </div>
     {showTools && <div className="flex flex-wrap gap-1.5 rounded-xl border border-slate-200 p-2 bg-slate-50">{TEMPLATES.map(t => <button type="button" key={t.title} onMouseDown={e => e.preventDefault()} onClick={() => { if (!t.fields.length) insert(t.make([])); else open(t); }} className="px-2.5 py-1.5 text-[13px] font-medium rounded-lg bg-white border border-slate-200 hover:border-indigo-400">{t.label}</button>)}</div>}
     {template && <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-3 space-y-3" aria-label="Chỉnh sửa công thức">
