@@ -182,17 +182,10 @@ export default function VisualMathEditor({ value, onChange, onFocus, placeholder
       <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => setShowTools(v => !v)} className="rounded-lg px-3 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 text-[13px] font-semibold">{showTools ? 'Ẩn công cụ toán' : '+ Chèn công thức toán'}</button>
       <span className="text-[12px] text-slate-500">Công thức hiển thị trực tiếp; nhấp vào công thức để sửa.</span>
     </div>
-    <div className="flex flex-wrap items-center gap-1.5" aria-label="Chèn nhanh ký hiệu vô cực">
-      <span className="text-[12px] text-slate-600 mr-1">Chèn nhanh:</span>
-      {([{ label: '∞', formula: '\\infty' }, { label: '+∞', formula: '+\\infty' }, { label: '−∞', formula: '-\\infty' }]).map(item =>
-        <button type="button" key={item.label} title={`Chèn ${item.label} tại vị trí con trỏ`} onMouseDown={e => e.preventDefault()} onClick={() => insert(item.formula)} className="min-w-10 px-2.5 py-1.5 text-[16px] font-semibold rounded-lg bg-white border border-indigo-200 text-indigo-800 hover:bg-indigo-50">{item.label}</button>
-      )}
-    </div>
     {showTools && <div className="flex flex-wrap gap-1.5 rounded-xl border border-slate-200 p-2 bg-slate-50">{TEMPLATES.map(t => <button type="button" key={t.title} onMouseDown={e => e.preventDefault()} onClick={() => { if (!t.fields.length) insert(t.make([])); else open(t); }} className="px-2.5 py-1.5 text-[13px] font-medium rounded-lg bg-white border border-slate-200 hover:border-indigo-400">{t.label}</button>)}</div>}
     {template && <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-3 space-y-3" aria-label="Chỉnh sửa công thức">
       <div className="font-bold text-indigo-900 text-[14px]">{editing ? 'Chỉnh sửa công thức' : `Chèn ${template.title}`}</div>
       {uneditable ? <div className="text-[13px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2">Công thức cũ có cấu trúc phức tạp. Để giữ nguyên công thức, hãy chọn mẫu mới trên thanh công cụ hoặc nhấn Hủy. Không cần nhập mã kỹ thuật.</div> : <div className="text-[12px] text-slate-600">Chạm vào từng ô để sửa trực tiếp. Không cần gõ lệnh công thức.</div>}
-      <div className="flex flex-wrap gap-1">{TEMPLATES.filter(t => t.fields.length).map(t => <button type="button" key={t.title} onClick={() => { setTemplate(t); setFields([...t.defaults]); setVisualKind(t.label === 'Phân số' ? 'fraction' : t.label === 'Căn' ? 'root' : 'template'); setUneditable(false); }} className="px-2 py-1 text-[12px] rounded border bg-white">{t.label}</button>)}</div>
       {!uneditable && visualKind === 'fraction' ? <div className="rounded-lg bg-white p-3 border border-indigo-100 flex items-center justify-center gap-2 flex-wrap">
         <input aria-label="Biểu thức trước phân số" placeholder="Trước phân số (ví dụ: y =)" className="w-24 min-w-0 p-2 border rounded text-center" value={fields[0] || ''} onChange={e => setFields(a => a.map((v,i) => i === 0 ? e.target.value : v))}/>
         <div className="inline-flex flex-col items-stretch min-w-28 gap-1">
