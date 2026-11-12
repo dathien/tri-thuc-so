@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import VisualMathEditor from './VisualMathEditor';
 import {
   ArrowLeft,
   Check,
@@ -173,15 +174,6 @@ export const ExamQuestionEditPage: React.FC<ExamQuestionEditPageProps> = ({
   const [isGraphicsPickerModalOpen, setIsGraphicsPickerModalOpen] = useState<boolean>(false);
   const [selectedShortcutCategory, setSelectedShortcutCategory] = useState<string>('all');
 
-  // References for cursor-position formula insertion
-  const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const explanationTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const optionInputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const subItemInputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const [activeTarget, setActiveTarget] = useState<
-    'content' | 'explanation' | { optionIdx: number } | { subItemIdx: number }
-  >('content');
-
   // Question part determination
   const partType: 1 | 2 | 3 =
     question.part ||
@@ -219,108 +211,6 @@ export const ExamQuestionEditPage: React.FC<ExamQuestionEditPageProps> = ({
     );
     setIsDirty(false);
   }, [question]);
-
-  // Insert formula at exact cursor position without duplicate $ delimiters
-  const insertFormulaAtCursor = (latexSnippet: string) => {
-    soundService.playClick();
-    setIsDirty(true);
-
-    const getInsertion = (prev: string, start: number, end: number) => {
-      const inside = isCursorInsideMath(prev, start);
-      // Clean snippet if it already contains wrapping $
-      let cleanSnippet = latexSnippet.trim();
-      if (cleanSnippet.startsWith('$') && cleanSnippet.endsWith('$') && cleanSnippet.length > 2) {
-        cleanSnippet = cleanSnippet.slice(1, -1).trim();
-      }
-      // If already inside math, insert snippet directly without duplicate $
-      // If outside math, wrap snippet in $...$
-      const insertText = inside ? cleanSnippet : `$${cleanSnippet}$`;
-      const updated = prev.substring(0, start) + insertText + prev.substring(end);
-      const newCursorPos = start + insertText.length;
-      return { updated, newCursorPos };
-    };
-
-    if (activeTarget === 'content') {
-      const el = contentTextareaRef.current;
-      if (el) {
-        const start = el.selectionStart || 0;
-        const end = el.selectionEnd || 0;
-        const prev = el.value;
-        const { updated, newCursorPos } = getInsertion(prev, start, end);
-        setContent(updated);
-        setTimeout(() => {
-          el.focus();
-          el.setSelectionRange(newCursorPos, newCursorPos);
-        }, 10);
-      } else {
-        const inside = isCursorInsideMath(content, content.length);
-        setContent((prev) => (inside ? `${prev}${latexSnippet}` : `${prev} $${latexSnippet}$ `));
-      }
-    } else if (activeTarget === 'explanation') {
-      const el = explanationTextareaRef.current;
-      if (el) {
-        const start = el.selectionStart || 0;
-        const end = el.selectionEnd || 0;
-        const prev = el.value;
-        const { updated, newCursorPos } = getInsertion(prev, start, end);
-        setExplanation(updated);
-        setTimeout(() => {
-          el.focus();
-          el.setSelectionRange(newCursorPos, newCursorPos);
-        }, 10);
-      } else {
-        const inside = isCursorInsideMath(explanation, explanation.length);
-        setExplanation((prev) => (inside ? `${prev}${latexSnippet}` : `${prev} $${latexSnippet}$ `));
-      }
-    } else if (typeof activeTarget === 'object' && 'optionIdx' in activeTarget) {
-      const idx = activeTarget.optionIdx;
-      const el = optionInputRefs.current[idx];
-      if (el) {
-        const start = el.selectionStart || 0;
-        const end = el.selectionEnd || 0;
-        const prev = el.value;
-        const { updated, newCursorPos } = getInsertion(prev, start, end);
-        const nextOpts = [...options];
-        nextOpts[idx] = updated;
-        setOptions(nextOpts);
-        setTimeout(() => {
-          el.focus();
-          el.setSelectionRange(newCursorPos, newCursorPos);
-        }, 10);
-      } else {
-        const nextOpts = [...options];
-        const optVal = nextOpts[idx] || '';
-        const inside = isCursorInsideMath(optVal, optVal.length);
-        nextOpts[idx] = inside ? `${optVal}${latexSnippet}` : `${optVal} $${latexSnippet}$`;
-        setOptions(nextOpts);
-      }
-    } else if (typeof activeTarget === 'object' && 'subItemIdx' in activeTarget) {
-      const idx = activeTarget.subItemIdx;
-      const el = subItemInputRefs.current[idx];
-      if (el) {
-        const start = el.selectionStart || 0;
-        const end = el.selectionEnd || 0;
-        const prev = el.value;
-        const { updated, newCursorPos } = getInsertion(prev, start, end);
-        const nextSub = [...subItems];
-        nextSub[idx] = { ...nextSub[idx], content: updated };
-        setSubItems(nextSub);
-        setTimeout(() => {
-          el.focus();
-          el.setSelectionRange(newCursorPos, newCursorPos);
-        }, 10);
-      } else {
-        const nextSub = [...subItems];
-        const val = nextSub[idx]?.content || '';
-        const inside = isCursorInsideMath(val, val.length);
-        nextSub[idx] = {
-          ...nextSub[idx],
-          content: inside ? `${val}${latexSnippet}` : `${val} $${latexSnippet}$`,
-        };
-        setSubItems(nextSub);
-      }
-    }
-  };
 
   // 1-Click Template: Benchmark True/False Question f(x) = (x-2)/(x+1)
   const handleLoadTrueFalseBenchmark = () => {
@@ -631,130 +521,13 @@ export const ExamQuestionEditPage: React.FC<ExamQuestionEditPageProps> = ({
               </h2>
             </div>
             <span className="text-[13px] text-slate-500 font-medium">
-              Nhập mã LaTeX giữa hai dấu <code className="px-1.5 py-0.5 rounded bg-slate-100 font-mono font-bold text-indigo-700">$...$</code> để kết xuất công thức chuẩn.
+              Soạn thảo văn bản và công thức toán học trực tiếp như Word Equation.
             </span>
           </div>
 
-          {/* KHU VỰC 2: THANH CÔNG CỤ SOẠN THẢO CÔNG THỨC */}
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <span className="text-[14px] font-bold text-slate-700 flex items-center gap-1.5">
-                <Calculator className="w-4 h-4 text-indigo-600" />
-                <span>Thanh công cụ chèn công thức Toán học (chèn tại vị trí con trỏ):</span>
-              </span>
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  type="button"
-                  onClick={handleLoadVectorBenchmark}
-                  className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold text-[12px] flex items-center gap-1 transition-colors cursor-pointer"
-                  title="Tải câu hỏi chuẩn Vectơ & Tọa độ để kiểm tra KaTeX"
-                >
-                  <span>Mẫu Vectơ</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleLoadTrueFalseBenchmark}
-                  className="px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 font-bold text-[12px] flex items-center gap-1 transition-colors cursor-pointer"
-                  title="Tải câu hỏi Đúng/Sai hàm phân thức f(x) = (x-2)/(x+1) với TXĐ D = ℝ\{-1}"
-                >
-                  <span>Mẫu Đúng/Sai f(x)</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleInsertSampleExplanation}
-                  className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold text-[12px] flex items-center gap-1 transition-colors cursor-pointer"
-                  title="Chèn đoạn lời giải mẫu: Dựa vào bảng biến thiên..."
-                >
-                  <span>Mẫu Lời giải (f'&gt;0)</span>
-                </button>
-
-                <span className="text-[13px] text-indigo-600 font-semibold bg-indigo-50/70 px-2 py-0.5 rounded-md border border-indigo-100">
-                  Đang chèn vào:{' '}
-                  {activeTarget === 'content'
-                    ? 'Nội dung câu hỏi'
-                    : activeTarget === 'explanation'
-                    ? 'Lời giải chi tiết'
-                    : 'optionIdx' in activeTarget
-                    ? `Phương án ${String.fromCharCode(65 + activeTarget.optionIdx)}`
-                    : `Ý ${subItems[activeTarget.subItemIdx]?.label || ''})`}
-                </span>
-              </div>
-            </div>
-
-            {/* Category Filter Tabs */}
-            <div className="flex items-center gap-1.5 flex-wrap border-b border-slate-200 pb-2">
-              {MATH_SHORTCUT_CATEGORIES.map((cat) => (
-                <button
-                  key={cat.id}
-                  type="button"
-                  onClick={() => setSelectedShortcutCategory(cat.id)}
-                  className={`px-2.5 py-1 rounded-lg text-[13px] font-bold transition-all cursor-pointer ${
-                    selectedShortcutCategory === cat.id
-                      ? 'bg-indigo-600 text-white shadow-2xs'
-                      : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200'
-                  }`}
-                >
-                  {cat.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Shortcut Buttons */}
-            <div className="flex items-center gap-1.5 flex-wrap">
-              {MATH_SHORTCUTS.filter(
-                (item) => selectedShortcutCategory === 'all' || item.category === selectedShortcutCategory
-              ).map((item) => (
-                <button
-                  key={item.label}
-                  type="button"
-                  title={`${item.title} (${item.insert})`}
-                  onClick={() => insertFormulaAtCursor(item.insert)}
-                  className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-indigo-50 border border-slate-200 text-slate-800 font-mono text-[14px] font-bold transition-all shadow-2xs hover:border-indigo-300 hover:text-indigo-700 cursor-pointer"
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="text-[12px] text-slate-400 italic">
-              * Tự động nhận diện ngữ cảnh: Nếu con trỏ đã nằm trong cặp dấu $, hệ thống sẽ chèn trực tiếp không lặp dấu $.
-            </div>
-          </div>
-
-          {/* Ô nhập nội dung câu hỏi */}
           <div className="space-y-2">
-            <label className="text-[14px] font-semibold text-slate-700 block">
-              Văn bản câu hỏi hoặc phát biểu bài toán (16px):
-            </label>
-            <textarea
-              ref={contentTextareaRef}
-              rows={4}
-              value={content}
-              onFocus={() => setActiveTarget('content')}
-              onChange={(e) => {
-                setContent(e.target.value);
-                setIsDirty(true);
-              }}
-              placeholder="Nhập nội dung câu hỏi... ví dụ: Cho hàm số $y = f(x)$ xác định và liên tục trên khoảng $(-\\infty; 0)$..."
-              className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-[16px] leading-[1.6] text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-sans"
-            />
-          </div>
-
-          {/* Vùng xem trước công thức tức thì */}
-          <div className="p-3.5 bg-indigo-50/60 rounded-xl border border-indigo-100 space-y-1.5">
-            <div className="text-[13px] font-bold text-indigo-900 flex items-center gap-1.5">
-              <Eye className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Xem trước kết xuất công thức câu hỏi:</span>
-            </div>
-            <div className="text-[16px] leading-[1.6] text-slate-900 bg-white p-3 rounded-lg border border-indigo-200 min-h-[44px]">
-              {content ? (
-                <MathRenderer content={content} inline />
-              ) : (
-                <span className="text-slate-400 italic text-[14px]">Chưa có nội dung xem trước...</span>
-              )}
-            </div>
+            <label className="text-[14px] font-semibold text-slate-700 block">Nội dung câu hỏi</label>
+            <VisualMathEditor editorId="question" rows={4} value={content} onChange={v => { setContent(v); setIsDirty(true); }} />
           </div>
         </section>
 
@@ -866,7 +639,7 @@ export const ExamQuestionEditPage: React.FC<ExamQuestionEditPageProps> = ({
               </h2>
             </div>
             <span className="text-[13px] text-slate-500 font-medium">
-              Font chữ nội dung: 16px. Mỗi phương án có ô nhập và vùng xem trước KaTeX độc lập.
+              Soạn văn bản và công thức trực tiếp trong từng phương án (cỡ chữ 16px).
             </span>
           </div>
 
@@ -921,52 +694,11 @@ export const ExamQuestionEditPage: React.FC<ExamQuestionEditPageProps> = ({
                           </span>
                         </label>
 
-                        {/* Input for Option Text */}
-                        <input
-                          ref={(el) => {
-                            optionInputRefs.current[i] = el;
-                          }}
-                          type="text"
-                          value={opt}
-                          onFocus={() => setActiveTarget({ optionIdx: i })}
-                          onChange={(e) => {
-                            const next = [...options];
-                            next[i] = e.target.value;
-                            setOptions(next);
-                            setIsDirty(true);
-                          }}
-                          placeholder={`Nhập nội dung phương án ${letter}... ví dụ: $(-\\infty; 0)$`}
-                          className={`flex-1 px-3.5 py-2 rounded-xl border text-[16px] text-slate-900 font-sans focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all ${
-                            isCorrect
-                              ? 'bg-white border-emerald-400 font-semibold'
-                              : 'bg-white border-slate-300'
-                          }`}
-                        />
-
-                        {/* Button to insert formula shortcut into this option */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActiveTarget({ optionIdx: i });
-                            insertFormulaAtCursor('\\infty');
-                          }}
-                          className="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[13px] border border-slate-200 transition-colors shrink-0"
-                          title="Chèn công thức nhanh vào phương án này"
-                        >
-                          + Công thức
-                        </button>
-                      </div>
-
-                      {/* Live Formula Preview for this Option */}
-                      <div className="mt-2 pl-12 flex items-center gap-2 text-[14px]">
-                        <span className="text-[13px] text-slate-400 font-medium">Xem trước:</span>
-                        <div className="bg-white px-3 py-1 rounded-md border border-slate-200 text-[16px] font-medium text-slate-900 inline-block min-w-[80px]">
-                          {opt ? (
-                            <MathRenderer content={opt} inline />
-                          ) : (
-                            <span className="text-slate-300 italic text-[13px]">Trống</span>
-                          )}
+                        <div className="flex-1 min-w-0">
+                          <VisualMathEditor editorId={`option-${i}`} rows={2} value={opt} onChange={v => { const next = [...options]; next[i] = v; setOptions(next); setIsDirty(true); }} />
                         </div>
+                      </div>
+                      <div className="mt-2 pl-12 flex items-center gap-2 text-[14px]">
                         {isCorrect && (
                           <span className="ml-auto text-emerald-700 font-bold text-[13px] flex items-center gap-1">
                             <Check className="w-4 h-4 text-emerald-600" />
@@ -1004,34 +736,9 @@ export const ExamQuestionEditPage: React.FC<ExamQuestionEditPageProps> = ({
                         {sub.label})
                       </span>
 
-                      <input
-                        ref={(el) => {
-                          subItemInputRefs.current[idx] = el;
-                        }}
-                        type="text"
-                        value={sub.content}
-                        onFocus={() => setActiveTarget({ subItemIdx: idx })}
-                        onChange={(e) => {
-                          const next = [...subItems];
-                          next[idx] = { ...next[idx], content: e.target.value };
-                          setSubItems(next);
-                          setIsDirty(true);
-                        }}
-                        placeholder={`Nội dung mệnh đề ${sub.label}... ví dụ: Tập xác định là $D = \\mathbb{R} \\setminus \\{-1\\}$`}
-                        className="flex-1 px-3.5 py-2 rounded-xl bg-white border border-slate-300 text-[16px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                      />
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveTarget({ subItemIdx: idx });
-                          insertFormulaAtCursor('\\mathbb{R}\\setminus\\{-1\\}');
-                        }}
-                        className="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[13px] border border-slate-200 transition-colors shrink-0"
-                        title="Chèn công thức nhanh vào ý này"
-                      >
-                        + Công thức
-                      </button>
+                      <div className="flex-1 min-w-0">
+                        <VisualMathEditor editorId={`sub-${idx}`} rows={2} value={sub.content} onChange={v => { const next = [...subItems]; next[idx] = { ...next[idx], content: v }; setSubItems(next); setIsDirty(true); }} />
+                      </div>
 
                       <button
                         type="button"
@@ -1052,16 +759,6 @@ export const ExamQuestionEditPage: React.FC<ExamQuestionEditPageProps> = ({
                       </button>
                     </div>
 
-                    <div className="pl-10 flex items-center gap-2 text-[14px]">
-                      <span className="text-[13px] text-slate-400 font-medium">Xem trước:</span>
-                      <div className="bg-white px-3 py-1 rounded-md border border-slate-200 text-[16px] font-medium text-slate-900 inline-block min-w-[80px]">
-                        {sub.content ? (
-                          <MathRenderer content={sub.content} inline />
-                        ) : (
-                          <span className="text-slate-300 italic text-[13px]">Trống</span>
-                        )}
-                      </div>
-                    </div>
                   </div>
                 ))}
               </div>
@@ -1207,59 +904,11 @@ export const ExamQuestionEditPage: React.FC<ExamQuestionEditPageProps> = ({
                 Lời giải chi tiết &amp; Hướng dẫn chấm
               </h2>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleInsertSampleExplanation}
-                className="px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-[13px] border border-emerald-200 transition-colors cursor-pointer"
-                title="Chèn đoạn văn bản kiểm thử: Dựa vào bảng biến thiên, ta thấy f'(x)>0..."
-              >
-                + Chèn đoạn mẫu $f'(x)&gt;0$
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTarget('explanation');
-                  insertFormulaAtCursor("f'(x) > 0");
-                }}
-                className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[13px] border border-slate-200 transition-colors cursor-pointer"
-              >
-                + Chèn công thức vào lời giải
-              </button>
-            </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-[14px] font-semibold text-slate-700 block">
-              Trình soạn thảo lời giải (hỗ trợ xuống dòng và công thức KaTeX):
-            </label>
-            <textarea
-              ref={explanationTextareaRef}
-              rows={5}
-              value={explanation}
-              onFocus={() => setActiveTarget('explanation')}
-              onChange={(e) => {
-                setExplanation(e.target.value);
-                setIsDirty(true);
-              }}
-              placeholder="Nhập các bước giải chi tiết hoặc tiêu chí cho điểm từng bước... ví dụ: Dựa vào bảng biến thiên, ta thấy $f'(x) > 0$ trên các khoảng $(-\\infty; 0)$ và $(2; +\\infty)$. Do đó hàm số đồng biến trên khoảng $(-\\infty; 0)$."
-              className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-[16px] leading-[1.6] text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-sans"
-            />
-          </div>
-
-          {/* Vùng xem trước lời giải tức thì */}
-          <div className="p-3.5 bg-indigo-50/60 rounded-xl border border-indigo-100 space-y-1.5">
-            <div className="text-[13px] font-bold text-indigo-900 flex items-center gap-1.5">
-              <Eye className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Xem trước lời giải &amp; hướng dẫn chấm:</span>
-            </div>
-            <div className="text-[16px] leading-[1.6] text-slate-800 bg-white p-3.5 rounded-lg border border-indigo-200 min-h-[44px]">
-              {explanation ? (
-                <MathRenderer content={explanation} />
-              ) : (
-                <span className="text-slate-400 italic text-[14px]">Chưa có lời giải chi tiết...</span>
-              )}
-            </div>
+            <label className="text-[14px] font-semibold text-slate-700 block">Lời giải chi tiết và hướng dẫn chấm</label>
+            <VisualMathEditor editorId="explanation" rows={5} value={explanation} onChange={v => { setExplanation(v); setIsDirty(true); }} />
           </div>
         </section>
 
