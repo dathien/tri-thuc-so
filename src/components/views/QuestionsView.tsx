@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { Question, CognitiveLevel, QuestionType, MathGraphicConfig } from '../../types';
 import MathRenderer from '../MathRenderer';
+import VisualMathEditor from '../exam-editor/VisualMathEditor';
 import MathGraphicDisplay from '../math-graphics/MathGraphicDisplay';
 import MathGraphicsPicker from '../math-graphics/MathGraphicsPicker';
 import DocxImportModal from '../DocxImportModal';
@@ -167,6 +168,7 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
 
   return (
     <div className="space-y-6">
+      <div className={showAddModal ? "hidden" : "space-y-6"}>
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
         <div>
@@ -179,7 +181,7 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Tổ chức theo ma trận chuẩn hóa: Lớp 10–12, 4 mức độ nhận thức (có thể gán và điều chỉnh trực tiếp), hỗ trợ công thức KaTeX.
+            Quản lý câu hỏi theo khối lớp, học kỳ và mức độ nhận thức; hỗ trợ soạn công thức toán học trực quan.
           </p>
         </div>
 
@@ -607,10 +609,11 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
         )}
       </div>
 
-      {/* Add Question Modal */}
+      </div>
+      {/* Trang soạn câu hỏi riêng, không dùng popup */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-2xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto">
+        <section className="w-full min-w-0">
+          <div className="bg-white rounded-2xl w-full p-4 sm:p-6 border border-slate-200 shadow-sm">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-base text-slate-900">Soạn câu hỏi mới vào Ngân hàng</h3>
               <button
@@ -673,25 +676,8 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">
-                  Nội dung câu hỏi (hỗ trợ công thức KaTeX đặt trong $...$) <span className="text-rose-500">*</span>
-                </label>
-                <textarea
-                  required
-                  rows={3}
-                  placeholder="Ví dụ: Cho hàm số $y = x^3 - 3x + 1$. Điểm cực đại của đồ thị hàm số là..."
-                  value={newContent}
-                  onChange={(e) => setNewContent(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400/50"
-                />
-                {newContent && (
-                  <div className="mt-2 p-2.5 rounded-xl bg-slate-100 text-slate-900 border border-slate-200">
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
-                      Xem trước hiển thị công thức:
-                    </span>
-                    <MathRenderer content={newContent} />
-                  </div>
-                )}
+                <label className="block font-semibold text-slate-700 mb-2">Nội dung câu hỏi <span className="text-rose-500">*</span></label>
+                <VisualMathEditor editorId="bank-question-content" rows={4} value={newContent} onChange={setNewContent} placeholder="Nhập nội dung câu hỏi và chèn công thức bằng thanh công cụ" />
               </div>
 
               {/* Graphic Attachment in Modal */}
@@ -740,69 +726,20 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
                 )}
               </div>
 
-              {/* Options Inputs */}
-              <div className="space-y-2">
-                <label className="block font-semibold text-slate-700">
-                  Các lựa chọn đáp án (A, B, C, D)
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <input
-                      type="text"
-                      placeholder="Đáp án A: $(0; 1)$"
-                      value={newOptionA}
-                      onChange={(e) => setNewOptionA(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl"
-                    />
-                    {newOptionA && (
-                      <div className="px-2 py-0.5 bg-white border border-slate-200 rounded text-slate-800 text-[11px]">
-                        A: <MathRenderer content={newOptionA} inline />
-                      </div>
-                    )}
+              {/* Dùng cùng trình soạn thảo trực quan với trang sửa đề */}
+              <div className="space-y-3">
+                <label className="block font-semibold text-slate-700">Các phương án trả lời (A, B, C, D)</label>
+                {([
+                  ['A', newOptionA, setNewOptionA],
+                  ['B', newOptionB, setNewOptionB],
+                  ['C', newOptionC, setNewOptionC],
+                  ['D', newOptionD, setNewOptionD],
+                ] as const).map(([letter, value, setter]) => (
+                  <div key={letter} className="rounded-xl border border-slate-200 p-3">
+                    <label className="block font-semibold mb-2">Phương án {letter}</label>
+                    <VisualMathEditor editorId={`bank-option-${letter}`} rows={2} value={value} onChange={setter} />
                   </div>
-                  <div className="space-y-1">
-                    <input
-                      type="text"
-                      placeholder="Đáp án B: $(1; -1)$"
-                      value={newOptionB}
-                      onChange={(e) => setNewOptionB(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl"
-                    />
-                    {newOptionB && (
-                      <div className="px-2 py-0.5 bg-white border border-slate-200 rounded text-slate-800 text-[11px]">
-                        B: <MathRenderer content={newOptionB} inline />
-                      </div>
-                    )}
-                  </div>
-                  <div className="space-y-1">
-                    <input
-                      type="text"
-                      placeholder="Đáp án C: $(-1; 3)$"
-                      value={newOptionC}
-                      onChange={(e) => setNewOptionC(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl"
-                    />
-                    {newOptionC && (
-                      <div className="px-2 py-0.5 bg-white border border-slate-200 rounded text-slate-800 text-[11px]">
-                        C: <MathRenderer content={newOptionC} inline />
-                      </div>
-                    )}
-                  </div>
-                  <div className="space-y-1">
-                    <input
-                      type="text"
-                      placeholder="Đáp án D: $(2; 3)$"
-                      value={newOptionD}
-                      onChange={(e) => setNewOptionD(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl"
-                    />
-                    {newOptionD && (
-                      <div className="px-2 py-0.5 bg-white border border-slate-200 rounded text-slate-800 text-[11px]">
-                        D: <MathRenderer content={newOptionD} inline />
-                      </div>
-                    )}
-                  </div>
-                </div>
+                ))}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -835,22 +772,8 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Lời giải / Hướng dẫn chấm</label>
-                <textarea
-                  rows={2}
-                  placeholder="Ghi chú bước giải và kết quả toán học... ví dụ: $f'(x) = 3x^2 - 3 > 0$..."
-                  value={newExplanation}
-                  onChange={(e) => setNewExplanation(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl"
-                />
-                {newExplanation && (
-                  <div className="mt-1.5 p-2 bg-slate-100 rounded-lg text-slate-800 text-[11px]">
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">
-                      Xem trước lời giải:
-                    </span>
-                    <MathRenderer content={newExplanation} />
-                  </div>
-                )}
+                <label className="block font-semibold text-slate-700 mb-2">Lời giải / Hướng dẫn chấm</label>
+                <VisualMathEditor editorId="bank-explanation" rows={4} value={newExplanation} onChange={setNewExplanation} />
               </div>
 
               <div className="pt-2 flex items-center justify-end gap-2">
