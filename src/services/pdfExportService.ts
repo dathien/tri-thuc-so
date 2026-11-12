@@ -134,6 +134,41 @@ export const pdfExportService = {
       text-align: center;
       font-weight: bold;
     }
+    /* Keep headings readable in print: no accidental inherited math styling. */
+    .answer-section-heading {
+      display: block;
+      font-family: 'Times New Roman', Times, serif;
+      font-style: normal;
+      font-weight: bold;
+      font-size: 12.5pt;
+      line-height: 1.5;
+      letter-spacing: normal;
+      word-spacing: normal;
+      white-space: normal;
+      margin: 14px 0 7px;
+    }
+    .answer-section-heading .heading-detail { font-weight: normal; }
+    .question-graphic-print {
+      display: block;
+      width: 100%;
+      max-width: 155mm;
+      margin: 8px auto 12px;
+      text-align: center;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      overflow: visible;
+    }
+    .question-graphic-print svg,
+    .question-graphic-print img {
+      display: block;
+      width: auto;
+      height: auto;
+      max-width: 100%;
+      max-height: 95mm;
+      object-fit: contain;
+      margin: 0 auto;
+      overflow: visible;
+    }
     .text-center { text-align: center !important; }
     .text-right { text-align: right !important; }
     @media print {
@@ -261,7 +296,7 @@ export const pdfExportService = {
   </div>
 
   <!-- PART 1 KEY -->
-  <div class="bold" style="margin: 10px 0 6px 0;">I. ĐÁP ÁN PHẦN I (Mỗi câu đúng 0,25 điểm)</div>
+  <div class="answer-section-heading">I. ĐÁP ÁN PHẦN I <span class="heading-detail">(Mỗi câu đúng 0,25 điểm)</span></div>
   <table class="data-table">
     <tr>
       ${bundle.masterAnswerKey.part1.slice(0, 6).map((item) => `<th class="text-center">Câu ${item.questionNumber}</th>`).join('')}
@@ -278,7 +313,7 @@ export const pdfExportService = {
   </table>
 
   <!-- PART 2 KEY -->
-  <div class="bold" style="margin: 14px 0 6px 0;">II. ĐÁP ÁN PHẦN II (Trắc nghiệm đúng/sai - 4,0 điểm)</div>
+  <div class="answer-section-heading">II. ĐÁP ÁN PHẦN II <span class="heading-detail">(Trắc nghiệm đúng/sai – 4,0 điểm)</span></div>
   <div class="italic" style="font-size: 11pt; margin-bottom: 6px;">Quy tắc: Đúng 1 ý: 0,1đ | Đúng 2 ý: 0,25đ | Đúng 3 ý: 0,5đ | Đúng 4 ý: 1,0đ</div>
   <table class="data-table">
     <tr>
@@ -306,7 +341,7 @@ export const pdfExportService = {
   </table>
 
   <!-- PART 3 KEY -->
-  <div class="bold" style="margin: 14px 0 6px 0;">III. ĐÁP ÁN PHẦN III (Trả lời ngắn - Mỗi câu đúng 0,5 điểm)</div>
+  <div class="answer-section-heading">III. ĐÁP ÁN PHẦN III <span class="heading-detail">(Trả lời ngắn – Mỗi câu đúng 0,5 điểm)</span></div>
   <table class="data-table">
     <tr>
       ${bundle.masterAnswerKey.part3.map((item) => `<th class="text-center">Câu ${item.questionNumber}</th>`).join('')}
@@ -362,15 +397,24 @@ export const pdfExportService = {
 
 function renderQuestionGraphicHtml(graphics?: MathGraphicConfig): string {
   if (!graphics) return '';
+  const wrap = (content: string) => `<figure class="question-graphic-print">${content}</figure>`;
+  // Oxyz must be re-rendered with the current auto-fit engine: cached images/SVGs
+  // can contain clipping baked into the old bitmap, which CSS cannot repair.
+  if (graphics.type === 'space_3d_oxyz') {
+    try {
+      return wrap(exportGraphicToSvg(graphics, 720, 480));
+    } catch {
+      // Continue to the saved representation if the live renderer is unavailable.
+    }
+  }
   if (graphics.exportedImageData) {
-    return `<div style="text-align:center;margin:8px 0;"><img src="${graphics.exportedImageData}" style="max-height:160px;max-width:320px;border-radius:4px;" /></div>`;
+    return wrap(`<img src="${escapeHtml(graphics.exportedImageData)}" alt="Hình minh họa toán học" />`);
   }
   if (graphics.svgData) {
-    return `<div style="text-align:center;margin:8px 0;">${graphics.svgData}</div>`;
+    return wrap(graphics.svgData);
   }
   try {
-    const svg = exportGraphicToSvg(graphics, 320, 180);
-    return `<div style="text-align:center;margin:8px 0;">${svg}</div>`;
+    return wrap(exportGraphicToSvg(graphics, 720, 480));
   } catch {
     return '';
   }
