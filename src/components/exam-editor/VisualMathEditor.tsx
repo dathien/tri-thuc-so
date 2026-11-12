@@ -121,7 +121,6 @@ export default function VisualMathEditor({ value, onChange, onFocus, placeholder
   const [fields, setFields] = useState<string[]>([]);
   const [visualKind, setVisualKind] = useState('plain');
   const [uneditable, setUneditable] = useState(false);
-  const [showTools, setShowTools] = useState(false);
   useEffect(() => {
     const el = editor.current;
     if (el && value !== lastValue.current) { el.innerHTML = render(value); lastValue.current = value; }
@@ -183,10 +182,10 @@ export default function VisualMathEditor({ value, onChange, onFocus, placeholder
       style={{ minHeight: `${Math.max(2, rows) * 30}px`, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}
       className="w-full p-3.5 bg-white border border-slate-300 rounded-xl text-[16px] leading-[1.8] text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
     <div className="flex items-center gap-2 flex-wrap">
-      <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => setShowTools(v => !v)} className="rounded-lg px-3 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 text-[13px] font-semibold">{showTools ? 'Ẩn công cụ toán' : '+ Chèn công thức toán'}</button>
+      <span className="rounded-lg px-3 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 text-[13px] font-semibold">Thanh công cụ toán học</span>
       <span className="text-[12px] text-slate-500">Công thức hiển thị trực tiếp; nhấp vào công thức để sửa.</span>
     </div>
-    {showTools && <div className="flex flex-wrap gap-1.5 rounded-xl border border-slate-200 p-2 bg-slate-50">{TEMPLATES.map(t => <button type="button" key={t.title} onMouseDown={e => e.preventDefault()} onClick={() => { if (!t.fields.length) insert(t.make([])); else open(t); }} className="px-2.5 py-1.5 text-[13px] font-medium rounded-lg bg-white border border-slate-200 hover:border-indigo-400">{t.label}</button>)}</div>}
+    {<div className="flex flex-wrap gap-1.5 rounded-xl border border-slate-200 p-2 bg-slate-50">{TEMPLATES.map(t => <button type="button" key={t.title} onMouseDown={e => e.preventDefault()} onClick={() => { if (!t.fields.length) insert(t.make([])); else open(t); }} className="px-2.5 py-1.5 text-[13px] font-medium rounded-lg bg-white border border-slate-200 hover:border-indigo-400">{t.label}</button>)}</div>}
     {template && <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-3 space-y-3" aria-label="Chỉnh sửa công thức">
       <div className="font-bold text-indigo-900 text-[14px]">{editing ? 'Chỉnh sửa công thức' : `Chèn ${template.title}`}</div>
       {uneditable ? <div className="text-[13px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2">Chưa thể sửa công thức này bằng các ô nhập. Thầy cô có thể nhấn Hủy để giữ nguyên, hoặc chọn một mẫu trên thanh công cụ để thay thế.</div> : <div className="text-[12px] text-slate-600">Chọn ô cần thay đổi, nhập giá trị mới rồi nhấn Lưu công thức.</div>}
