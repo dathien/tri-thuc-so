@@ -74,7 +74,12 @@ export default function App() {
       return INITIAL_MATRICES;
     }
   });
-  const [exams, setExams] = useState<Exam[]>(INITIAL_EXAMS);
+  const [exams, setExams] = useState<Exam[]>(() => {
+    try { const stored = localStorage.getItem('edutest_math_exams'); return stored ? JSON.parse(stored) : INITIAL_EXAMS; }
+    catch { return INITIAL_EXAMS; }
+  });
+  const [editingExam, setEditingExam] = useState<Exam | null>(null);
+  useEffect(() => { try { localStorage.setItem('edutest_math_exams', JSON.stringify(exams)); } catch (e) { console.warn('Không lưu được đề thi', e); } }, [exams]);
   const [submissions, setSubmissions] = useState<ExamSubmission[]>(INITIAL_SUBMISSIONS);
   const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
   const [activities, setActivities] = useState<ActivityLog[]>(INITIAL_ACTIVITY_LOGS);
@@ -190,7 +195,12 @@ export default function App() {
     setMatrices((prev) => prev.map((m) => (m.id === updatedMatrix.id ? updatedMatrix : m)));
   };
 
-  const handleSaveExam = (newExam: Omit<Exam, 'id' | 'createdAt'>) => {
+  const handleSaveExam = (newExam: Omit<Exam, 'id' | 'createdAt'>, existingId?: string) => {
+    if (existingId) {
+      setExams(prev => prev.map(exam => exam.id === existingId ? { ...exam, ...newExam, id: exam.id, createdAt: exam.createdAt } : exam));
+      setEditingExam(null);
+      return;
+    }
     const created: Exam = {
       ...newExam,
       id: `exam-${Date.now()}`,
@@ -331,12 +341,16 @@ export default function App() {
               questions={questions}
               classes={classes}
               onSaveExam={handleSaveExam}
-              onNavigateToVault={() => setCurrentSection('exam-vault')}
+              initialExam={editingExam}
+              onClearInitialExam={() => setEditingExam(null)}
+              onNavigateToVault={() => { setEditingExam(null); setCurrentSection('exam-vault'); }}
             />
           )}
 
           {currentSection === 'exam-vault' && (
             <ExamVaultView
+              onEditExam={(exam) => { setEditingExam(exam); setCurrentSection('exam-builder'); }}
+              onUpdateExam={(exam) => setExams(prev => prev.map(item => item.id === exam.id ? exam : item))}
               exams={exams}
               classes={classes}
               onNavigate={(sec) => setCurrentSection(sec)}
