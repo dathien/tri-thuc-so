@@ -872,9 +872,9 @@ function drawSpace3dOxyz(
   const C = Number(params.planeC ?? -1);
   const D = Number(params.planeD ?? -3);
 
-  const cx = width / 2;
-  const cy = height / 2;
-  const scale = 36 * (camera.zoom || 1);
+  let cx = width / 2;
+  let cy = height / 2;
+  let scale = 36 * (camera.zoom || 1);
 
   const radX = (camera.rotX * Math.PI) / 180;
   const radY = (camera.rotY * Math.PI) / 180;
@@ -888,8 +888,38 @@ function drawSpace3dOxyz(
     return { px: cx + x1 * scale, py: cy - z2 * scale };
   };
 
-  const origin = project(0, 0, 0);
+  // Auto-fit the complete drawing (axes, grid, intercepts, normal and labels)
+  // into the actual canvas viewport. Never change the mathematical coordinates.
   const axisLen = 5.5;
+  const fitPoints: Array<[number, number, number]> = [
+    [0, 0, 0], [axisLen, 0, 0], [0, axisLen, 0], [0, 0, axisLen],
+  ];
+  if (showGrid) {
+    for (const x of [-4, 4]) for (const y of [-4, 4]) fitPoints.push([x, y, 0]);
+  }
+  if (Math.abs(A) > 0.001) fitPoints.push([-D / A, 0, 0]);
+  if (Math.abs(B) > 0.001) fitPoints.push([0, -D / B, 0]);
+  if (Math.abs(C) > 0.001) fitPoints.push([0, 0, -D / C]);
+  const normalLength = Math.hypot(A, B, C) || 1;
+  fitPoints.push([2.5 * A / normalLength, 2.5 * B / normalLength, 2.5 * C / normalLength]);
+  const projected = fitPoints.map(([x, y, z]) => project(x, y, z));
+  const left = Math.min(...projected.map(p => p.px));
+  const right = Math.max(...projected.map(p => p.px));
+  const top = Math.min(...projected.map(p => p.py));
+  const bottom = Math.max(...projected.map(p => p.py));
+  // Extra room for axis arrows and long coordinate labels.
+  const marginX = Math.min(70, width * 0.19);
+  const marginY = Math.min(52, height * 0.16);
+  const factor = Math.min(
+    1,
+    (width - 2 * marginX) / Math.max(1, right - left),
+    (height - 2 * marginY) / Math.max(1, bottom - top)
+  );
+  scale *= Math.max(0.001, factor);
+  cx = width / 2 - ((left + right) / 2 - width / 2) * factor;
+  cy = height / 2 - ((top + bottom) / 2 - height / 2) * factor;
+
+  const origin = project(0, 0, 0);
   const pX = project(axisLen, 0, 0);
   const pY = project(0, axisLen, 0);
   const pZ = project(0, 0, axisLen);
