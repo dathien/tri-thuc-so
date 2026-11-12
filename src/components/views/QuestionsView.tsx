@@ -793,7 +793,7 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
               </div>
             </form>
           </div>
-        </div>
+        </section>
       )}
 
       {/* Shared Math Graphics Picker Modal */}
