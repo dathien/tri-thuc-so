@@ -104,8 +104,264 @@ export const ExamVaultView: React.FC<ExamVaultViewProps> = ({
     pdfExportService.printPdf(bundle, 'full_bundle');
   };
 
+  const renderExamDetail = () => {
+    if (!previewExam) return null;
+    return (
+        <div className="w-full">
+          <div className="bg-white rounded-3xl w-full flex flex-col shadow-sm border border-slate-200 animate-in fade-in zoom-in-95">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between shrink-0">
+              <div>
+                <span className="font-mono text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">
+                  {previewExam.code}
+                </span>
+                <h3 className="font-bold text-base text-slate-900 mt-1">{previewExam.title}</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewExam(null)}
+                className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Tabs */}
+            <div className="px-5 border-b border-slate-100 flex items-center gap-2 text-xs font-bold overflow-x-auto shrink-0">
+              <button
+                type="button"
+                onClick={() => setActiveTab('paper')}
+                className={`py-3 px-3 border-b-2 transition-all ${activeTab === 'paper' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500'}`}
+              >
+                1. Đề thi (22 câu)
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('matrix')}
+                className={`py-3 px-3 border-b-2 transition-all ${activeTab === 'matrix' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500'}`}
+              >
+                2. Ma trận đề
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('spec')}
+                className={`py-3 px-3 border-b-2 transition-all ${activeTab === 'spec' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500'}`}
+              >
+                3. Bản đặc tả
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('key')}
+                className={`py-3 px-3 border-b-2 transition-all ${activeTab === 'key' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500'}`}
+              >
+                4. Đáp án &amp; Thang điểm
+              </button>
+            </div>
+
+            {/* School / Exam Info Banner */}
+            <div className="mx-6 mt-4 p-3 rounded-xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between text-xs text-slate-700 gap-2 shrink-0">
+              <div className="flex items-center gap-2">
+                <GraduationCap className="w-4 h-4 text-indigo-600 shrink-0" />
+                <span className="font-semibold text-slate-500">Tên trường:</span>
+                <span className="font-bold text-slate-900 uppercase">
+                  {getBundle(previewExam).schoolName || 'TRƯỜNG THPT'}
+                </span>
+              </div>
+              <div className="flex items-center gap-3 text-slate-500">
+                <span>Tổ Toán - Tin học</span>
+                <span>•</span>
+                <span>Năm học: 2025 - 2026</span>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 text-xs space-y-4">
+              {activeTab === 'paper' && (
+                <div className="space-y-4">
+                  {/* Formal Paper Header */}
+                  <div className="p-4 rounded-xl border border-slate-200 bg-white grid grid-cols-2 gap-4 text-center">
+                    <div>
+                      <div className="font-bold text-xs uppercase text-slate-900">
+                        {getBundle(previewExam).schoolName || 'TRƯỜNG THPT'}
+                      </div>
+                      <div className="font-bold text-[11px] text-slate-600">TỔ TOÁN - TIN HỌC</div>
+                      <div className="italic text-[10px] text-slate-400 mt-0.5">(Đề thi có 22 câu / 4 trang)</div>
+                    </div>
+                    <div>
+                      <div className="font-bold text-xs uppercase text-slate-900">{previewExam.title}</div>
+                      <div className="font-bold text-[11px] text-slate-600">NĂM HỌC 2025 - 2026</div>
+                      <div className="italic text-[10px] text-slate-400">Thời gian: {previewExam.durationMinutes} phút</div>
+                    </div>
+                  </div>
+
+                  {getBundle(previewExam).questions.map((q, idx) => (
+                    <div key={q.id} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2">
+                      <div className="flex items-center justify-between font-bold text-slate-800">
+                        <span>Câu {idx + 1} ({q.points}đ)</span>
+                        <span className="font-mono text-indigo-600 text-[11px]">{q.code}</span>
+                      </div>
+                      <div className="text-slate-900 leading-relaxed">
+                        <MathRenderer content={q.content} />
+                      </div>
+                      {q.options && (
+                        <div className="grid grid-cols-2 gap-2 pt-1">
+                          {q.options.map((opt, i) => (
+                            <div key={i} className="p-2 rounded-lg bg-white border border-slate-200 flex items-center gap-1.5">
+                              <strong>{String.fromCharCode(65 + i)}.</strong>
+                              <MathRenderer content={opt} inline />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {q.subItems && (
+                        <div className="space-y-1 pt-1 pl-2">
+                          {q.subItems.map((sub) => (
+                            <div key={sub.id} className="p-1.5 rounded bg-white border border-slate-200 flex items-center justify-between">
+                              <span><strong>{sub.label})</strong> {sub.content}</span>
+                              <span className="font-bold text-slate-500 text-[10px]">[ ] Đúng  [ ] Sai</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {activeTab === 'matrix' && (
+                <div className="space-y-2">
+                  <h4 className="font-bold text-slate-800 uppercase">Khung Ma trận chuẩn 10.0 điểm</h4>
+                  <div className="overflow-x-auto border border-slate-200 rounded-xl">
+                    <table className="w-full text-xs text-left border-collapse">
+                      <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200 text-center">
+                        <tr>
+                          <th className="p-2 border-r border-slate-200">Chủ đề</th>
+                          <th className="p-2 border-r border-slate-200">Nhận biết</th>
+                          <th className="p-2 border-r border-slate-200">Thông hiểu</th>
+                          <th className="p-2 border-r border-slate-200">Vận dụng</th>
+                          <th className="p-2 border-r border-slate-200">Vận dụng cao</th>
+                          <th className="p-2">Tổng</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {getBundle(previewExam).matrixItems.map((item, idx) => (
+                          <tr key={idx}>
+                            <td className="p-2 font-bold border-r border-slate-100">{item.chapter}</td>
+                            <td className="p-2 text-center border-r border-slate-100">{item.recognition}</td>
+                            <td className="p-2 text-center border-r border-slate-100">{item.comprehension}</td>
+                            <td className="p-2 text-center border-r border-slate-100">{item.application}</td>
+                            <td className="p-2 text-center border-r border-slate-100">{item.highApplication}</td>
+                            <td className="p-2 text-center font-bold">{item.totalQuestions} câu ({item.totalPoints}đ)</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'spec' && (
+                <div className="space-y-2">
+                  <h4 className="font-bold text-slate-800 uppercase">Bản đặc tả Yêu cầu cần đạt chuẩn GDPT</h4>
+                  <div className="space-y-2">
+                    {getBundle(previewExam).specifications.map((s) => (
+                      <div key={s.id} className="p-2.5 rounded-xl border border-slate-200 bg-slate-50 flex items-start gap-3">
+                        <span className="font-mono font-bold text-indigo-700 shrink-0">Câu {s.questionNumber}</span>
+                        <div className="flex-1 space-y-0.5">
+                          <span className="font-bold text-slate-800">{s.chapter} · {s.topic}</span>
+                          <p className="text-slate-600 text-[11px]">{s.learningObjective}</p>
+                        </div>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-200 text-slate-700 shrink-0">
+                          {s.cognitiveLevel}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'key' && (
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-bold text-slate-800 uppercase mb-2">Đáp án Phần I (12 câu)</h4>
+                    <div className="grid grid-cols-6 sm:grid-cols-12 gap-1.5 text-center">
+                      {getBundle(previewExam).masterAnswerKey.part1.map((item) => (
+                        <div key={item.questionNumber} className="p-2 rounded bg-indigo-50 border border-indigo-200">
+                          <span className="text-[10px] text-slate-400 block font-semibold">C{item.questionNumber}</span>
+                          <span className="font-mono font-bold text-indigo-700">{item.answer}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-bold text-slate-800 uppercase mb-2">Đáp án Phần III (6 câu)</h4>
+                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 text-center">
+                      {getBundle(previewExam).masterAnswerKey.part3.map((item) => (
+                        <div key={item.questionNumber} className="p-2 rounded bg-emerald-50 border border-emerald-200">
+                          <span className="text-[10px] text-slate-400 block font-semibold">C{item.questionNumber}</span>
+                          <span className="font-mono font-bold text-emerald-800">{item.answer}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 shrink-0 bg-slate-50 rounded-b-3xl">
+              <span className="text-slate-500 text-xs">
+                Hồ sơ đề thi được lưu trữ an toàn trong EduTest Smart.
+              </span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundService.playClick();
+                    const ex = previewExam;
+                    setPreviewExam(null);
+                    if (onEditExam) onEditExam(ex);
+                  }}
+                  className="px-3.5 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 font-bold text-xs flex items-center gap-1.5"
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                  Chỉnh sửa đề thi này
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleExportDocx(previewExam)}
+                  className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Xuất Word (.docx)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleExportPdf(previewExam)}
+                  className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-1.5"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  In / PDF
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+    );
+  };
+
   return (
     <div className="space-y-6">
+      {previewExam ? (
+        <div className="space-y-4">
+          <button type="button" onClick={() => setPreviewExam(null)} className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-indigo-700 hover:bg-indigo-50">← Quay lại kho đề kiểm tra</button>
+          {renderExamDetail()}
+        </div>
+      ) : (
+      <>
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
         <div>
@@ -400,249 +656,7 @@ export const ExamVaultView: React.FC<ExamVaultViewProps> = ({
         })}
       </div>
 
-      {/* Preview Exam Modal */}
-      {previewExam && (
-        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95">
-            {/* Modal Header */}
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between shrink-0">
-              <div>
-                <span className="font-mono text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">
-                  {previewExam.code}
-                </span>
-                <h3 className="font-bold text-base text-slate-900 mt-1">{previewExam.title}</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setPreviewExam(null)}
-                className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Modal Tabs */}
-            <div className="px-5 border-b border-slate-100 flex items-center gap-2 text-xs font-bold overflow-x-auto shrink-0">
-              <button
-                type="button"
-                onClick={() => setActiveTab('paper')}
-                className={`py-3 px-3 border-b-2 transition-all ${activeTab === 'paper' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500'}`}
-              >
-                1. Đề thi (22 câu)
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('matrix')}
-                className={`py-3 px-3 border-b-2 transition-all ${activeTab === 'matrix' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500'}`}
-              >
-                2. Ma trận đề
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('spec')}
-                className={`py-3 px-3 border-b-2 transition-all ${activeTab === 'spec' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500'}`}
-              >
-                3. Bản đặc tả
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('key')}
-                className={`py-3 px-3 border-b-2 transition-all ${activeTab === 'key' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500'}`}
-              >
-                4. Đáp án &amp; Thang điểm
-              </button>
-            </div>
-
-            {/* School / Exam Info Banner */}
-            <div className="mx-6 mt-4 p-3 rounded-xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between text-xs text-slate-700 gap-2 shrink-0">
-              <div className="flex items-center gap-2">
-                <GraduationCap className="w-4 h-4 text-indigo-600 shrink-0" />
-                <span className="font-semibold text-slate-500">Tên trường:</span>
-                <span className="font-bold text-slate-900 uppercase">
-                  {getBundle(previewExam).schoolName || 'TRƯỜNG THPT'}
-                </span>
-              </div>
-              <div className="flex items-center gap-3 text-slate-500">
-                <span>Tổ Toán - Tin học</span>
-                <span>•</span>
-                <span>Năm học: 2025 - 2026</span>
-              </div>
-            </div>
-
-            {/* Modal Content */}
-            <div className="p-6 overflow-y-auto flex-1 text-xs space-y-4">
-              {activeTab === 'paper' && (
-                <div className="space-y-4">
-                  {/* Formal Paper Header */}
-                  <div className="p-4 rounded-xl border border-slate-200 bg-white grid grid-cols-2 gap-4 text-center">
-                    <div>
-                      <div className="font-bold text-xs uppercase text-slate-900">
-                        {getBundle(previewExam).schoolName || 'TRƯỜNG THPT'}
-                      </div>
-                      <div className="font-bold text-[11px] text-slate-600">TỔ TOÁN - TIN HỌC</div>
-                      <div className="italic text-[10px] text-slate-400 mt-0.5">(Đề thi có 22 câu / 4 trang)</div>
-                    </div>
-                    <div>
-                      <div className="font-bold text-xs uppercase text-slate-900">{previewExam.title}</div>
-                      <div className="font-bold text-[11px] text-slate-600">NĂM HỌC 2025 - 2026</div>
-                      <div className="italic text-[10px] text-slate-400">Thời gian: {previewExam.durationMinutes} phút</div>
-                    </div>
-                  </div>
-
-                  {getBundle(previewExam).questions.map((q, idx) => (
-                    <div key={q.id} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2">
-                      <div className="flex items-center justify-between font-bold text-slate-800">
-                        <span>Câu {idx + 1} ({q.points}đ)</span>
-                        <span className="font-mono text-indigo-600 text-[11px]">{q.code}</span>
-                      </div>
-                      <div className="text-slate-900 leading-relaxed">
-                        <MathRenderer content={q.content} />
-                      </div>
-                      {q.options && (
-                        <div className="grid grid-cols-2 gap-2 pt-1">
-                          {q.options.map((opt, i) => (
-                            <div key={i} className="p-2 rounded-lg bg-white border border-slate-200 flex items-center gap-1.5">
-                              <strong>{String.fromCharCode(65 + i)}.</strong>
-                              <MathRenderer content={opt} inline />
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {q.subItems && (
-                        <div className="space-y-1 pt-1 pl-2">
-                          {q.subItems.map((sub) => (
-                            <div key={sub.id} className="p-1.5 rounded bg-white border border-slate-200 flex items-center justify-between">
-                              <span><strong>{sub.label})</strong> {sub.content}</span>
-                              <span className="font-bold text-slate-500 text-[10px]">[ ] Đúng  [ ] Sai</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {activeTab === 'matrix' && (
-                <div className="space-y-2">
-                  <h4 className="font-bold text-slate-800 uppercase">Khung Ma trận chuẩn 10.0 điểm</h4>
-                  <div className="overflow-x-auto border border-slate-200 rounded-xl">
-                    <table className="w-full text-xs text-left border-collapse">
-                      <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200 text-center">
-                        <tr>
-                          <th className="p-2 border-r border-slate-200">Chủ đề</th>
-                          <th className="p-2 border-r border-slate-200">Nhận biết</th>
-                          <th className="p-2 border-r border-slate-200">Thông hiểu</th>
-                          <th className="p-2 border-r border-slate-200">Vận dụng</th>
-                          <th className="p-2 border-r border-slate-200">Vận dụng cao</th>
-                          <th className="p-2">Tổng</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {getBundle(previewExam).matrixItems.map((item, idx) => (
-                          <tr key={idx}>
-                            <td className="p-2 font-bold border-r border-slate-100">{item.chapter}</td>
-                            <td className="p-2 text-center border-r border-slate-100">{item.recognition}</td>
-                            <td className="p-2 text-center border-r border-slate-100">{item.comprehension}</td>
-                            <td className="p-2 text-center border-r border-slate-100">{item.application}</td>
-                            <td className="p-2 text-center border-r border-slate-100">{item.highApplication}</td>
-                            <td className="p-2 text-center font-bold">{item.totalQuestions} câu ({item.totalPoints}đ)</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'spec' && (
-                <div className="space-y-2">
-                  <h4 className="font-bold text-slate-800 uppercase">Bản đặc tả Yêu cầu cần đạt chuẩn GDPT</h4>
-                  <div className="space-y-2">
-                    {getBundle(previewExam).specifications.map((s) => (
-                      <div key={s.id} className="p-2.5 rounded-xl border border-slate-200 bg-slate-50 flex items-start gap-3">
-                        <span className="font-mono font-bold text-indigo-700 shrink-0">Câu {s.questionNumber}</span>
-                        <div className="flex-1 space-y-0.5">
-                          <span className="font-bold text-slate-800">{s.chapter} · {s.topic}</span>
-                          <p className="text-slate-600 text-[11px]">{s.learningObjective}</p>
-                        </div>
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-200 text-slate-700 shrink-0">
-                          {s.cognitiveLevel}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'key' && (
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-bold text-slate-800 uppercase mb-2">Đáp án Phần I (12 câu)</h4>
-                    <div className="grid grid-cols-6 sm:grid-cols-12 gap-1.5 text-center">
-                      {getBundle(previewExam).masterAnswerKey.part1.map((item) => (
-                        <div key={item.questionNumber} className="p-2 rounded bg-indigo-50 border border-indigo-200">
-                          <span className="text-[10px] text-slate-400 block font-semibold">C{item.questionNumber}</span>
-                          <span className="font-mono font-bold text-indigo-700">{item.answer}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="font-bold text-slate-800 uppercase mb-2">Đáp án Phần III (6 câu)</h4>
-                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 text-center">
-                      {getBundle(previewExam).masterAnswerKey.part3.map((item) => (
-                        <div key={item.questionNumber} className="p-2 rounded bg-emerald-50 border border-emerald-200">
-                          <span className="text-[10px] text-slate-400 block font-semibold">C{item.questionNumber}</span>
-                          <span className="font-mono font-bold text-emerald-800">{item.answer}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 shrink-0 bg-slate-50 rounded-b-3xl">
-              <span className="text-slate-500 text-xs">
-                Hồ sơ đề thi được lưu trữ an toàn trong EduTest Smart.
-              </span>
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundService.playClick();
-                    const ex = previewExam;
-                    setPreviewExam(null);
-                    if (onEditExam) onEditExam(ex);
-                  }}
-                  className="px-3.5 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 font-bold text-xs flex items-center gap-1.5"
-                >
-                  <Edit3 className="w-3.5 h-3.5" />
-                  Chỉnh sửa đề thi này
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleExportDocx(previewExam)}
-                  className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  Xuất Word (.docx)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleExportPdf(previewExam)}
-                  className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-1.5"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  In / PDF
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+      </>
       )}
 
       {/* Version History Modal */}
