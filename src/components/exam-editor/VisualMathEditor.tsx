@@ -57,6 +57,56 @@ const TEMPLATES: { label: string; title: string; make: (fields: string[]) => str
   { label: 'α', title: 'Alpha', fields: [], defaults: [], make: () => '\\alpha' },
 ];
 
+// Parse common legacy formulas into human-readable fields; keep the original storage format.
+function extractGroup(source: string, start: number): { content: string; end: number } | null {
+  if (source[start] !== '{') return null;
+  let depth = 0;
+  for (let i = start; i < source.length; i++) {
+    if (source[i] === '{') depth++;
+    if (source[i] === '}' && --depth === 0) return { content: source.slice(start + 1, i), end: i + 1 };
+  }
+  return null;
+}
+function simpleText(source: string): string {
+  return source.replace(/\\infty/g, '∞').replace(/\\pi/g, 'π').replace(/\\alpha/g, 'α')
+    .replace(/\\leq/g, '≤').replace(/\\geq/g, '≥').replace(/\\ne/g, '≠')
+    .replace(/\\times/g, '×').replace(/\\cdot/g, '·').replace(/\\to/g, '→')
+    .replace(/\\,/g, ' ').replace(/\\;/g, ' ').replace(/\\ /g, ' ');
+}
+function toLatexText(source: string): string {
+  return source.replace(/∞/g, '\\infty').replace(/π/g, '\\pi').replace(/α/g, '\\alpha')
+    .replace(/≤/g, '\\leq ').replace(/≥/g, '\\geq ').replace(/≠/g, '\\ne ')
+    .replace(/×/g, '\\times ').replace(/·/g, '\\cdot ').replace(/→/g, '\\to ');
+}
+function parseEditableFormula(source: string): { kind: string; fields: string[] } | null {
+  const fracIndex = source.indexOf('\\frac');
+  if (fracIndex >= 0) {
+    let i = fracIndex + 5;
+    while (source[i] === ' ') i++;
+    const numerator = extractGroup(source, i);
+    if (numerator) {
+      i = numerator.end;
+      while (source[i] === ' ') i++;
+      const denominator = extractGroup(source, i);
+      if (denominator) return { kind: 'fraction', fields: [simpleText(source.slice(0, fracIndex)), simpleText(numerator.content), simpleText(denominator.content), simpleText(source.slice(denominator.end))] };
+    }
+  }
+  const sqrtIndex = source.indexOf('\\sqrt');
+  if (sqrtIndex >= 0) {
+    let i = sqrtIndex + 5;
+    if (source[i] === '{') {
+      const inside = extractGroup(source, i);
+      if (inside) return { kind: 'root', fields: [simpleText(source.slice(0, sqrtIndex)), simpleText(inside.content), simpleText(source.slice(inside.end))] };
+    }
+  }
+  if (!source.includes('\\') && !/[{}]/.test(source)) return { kind: 'plain', fields: [simpleText(source)] };
+  return null;
+}
+function makeEditableFormula(kind: string, fields: string[]): string {
+  if (kind === 'fraction') return `${toLatexText(fields[0])}\\frac{${toLatexText(fields[1])}}{${toLatexText(fields[2])}}${toLatexText(fields[3])}`;
+  if (kind === 'root') return `${toLatexText(fields[0])}\\sqrt{${toLatexText(fields[1])}}${toLatexText(fields[2])}`;
+  return toLatexText(fields[0] || '');
+}
 type Props = { value: string; onChange: (value: string) => void; onFocus?: () => void; placeholder?: string; rows?: number; editorId: string; };
 export default function VisualMathEditor({ value, onChange, onFocus, placeholder = 'Nhập nội dung và chèn công thức trực tiếp...', rows = 3, editorId }: Props) {
   const editor = useRef<HTMLDivElement>(null);
@@ -65,8 +115,8 @@ export default function VisualMathEditor({ value, onChange, onFocus, placeholder
   const [editing, setEditing] = useState<HTMLElement | null>(null);
   const [template, setTemplate] = useState<(typeof TEMPLATES)[number] | null>(null);
   const [fields, setFields] = useState<string[]>([]);
-  const [advanced, setAdvanced] = useState(false);
-  const [latex, setLatex] = useState('');
+  const [visualKind, setVisualKind] = useState('plain');
+  const [uneditable, setUneditable] = useState(false);
   const [showTools, setShowTools] = useState(false);
   useEffect(() => {
     const el = editor.current;
@@ -87,8 +137,11 @@ export default function VisualMathEditor({ value, onChange, onFocus, placeholder
     setEditing(token || null);
     setTemplate(t);
     setFields([...t.defaults]);
-    setLatex(token?.getAttribute('data-math') || t.make(t.defaults));
-    setAdvanced(!!token);
+    const current = token?.getAttribute('data-math');
+    const parsed = current ? parseEditableFormula(current) : null;
+    setUneditable(!!current && !parsed);
+    if (parsed) { setVisualKind(parsed.kind); setFields(parsed.fields); }
+    else { setVisualKind(t.label === 'Phân số' ? 'fraction' : t.label === 'Căn' ? 'root' : 'template'); }
   };
   const insert = (formula: string) => {
     const el = editor.current;
@@ -116,7 +169,7 @@ export default function VisualMathEditor({ value, onChange, onFocus, placeholder
     }
     emit(); setTemplate(null); setEditing(null); savedRange.current = null;
   };
-  const preview = advanced ? latex : template?.make(fields) || '';
+  const preview = visualKind !== 'template' && !uneditable ? makeEditableFormula(visualKind, fields) : template?.make(fields) || ''; 
   const valid = (() => { try { katex.renderToString(preview, { throwOnError: true }); return true; } catch { return false; } })();
   return <div className="space-y-2">
     <div ref={editor} contentEditable suppressContentEditableWarning role="textbox" aria-label="Soạn nội dung và công thức trực quan" aria-multiline="true" data-placeholder={placeholder}
@@ -138,12 +191,21 @@ export default function VisualMathEditor({ value, onChange, onFocus, placeholder
     {showTools && <div className="flex flex-wrap gap-1.5 rounded-xl border border-slate-200 p-2 bg-slate-50">{TEMPLATES.map(t => <button type="button" key={t.title} onMouseDown={e => e.preventDefault()} onClick={() => { if (!t.fields.length) insert(t.make([])); else open(t); }} className="px-2.5 py-1.5 text-[13px] font-medium rounded-lg bg-white border border-slate-200 hover:border-indigo-400">{t.label}</button>)}</div>}
     {template && <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-3 space-y-3" aria-label="Chỉnh sửa công thức">
       <div className="font-bold text-indigo-900 text-[14px]">{editing ? 'Chỉnh sửa công thức' : `Chèn ${template.title}`}</div>
-      {editing && <div className="text-[12px] text-slate-600">Chọn mẫu mới bên dưới hoặc mở chế độ nâng cao để chỉnh sửa công thức đã có.</div>}
-      <div className="flex flex-wrap gap-1">{TEMPLATES.filter(t => t.fields.length).map(t => <button type="button" key={t.title} onClick={() => { setTemplate(t); setFields([...t.defaults]); setAdvanced(false); }} className="px-2 py-1 text-[12px] rounded border bg-white">{t.label}</button>)}</div>
-      {!advanced ? <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">{template.fields.map((name, i) => <label key={i} className="text-[13px] text-slate-700">{name}<input className="block w-full mt-1 p-2 border rounded-lg bg-white" value={fields[i] || ''} onChange={e => setFields(old => old.map((v,j) => i === j ? e.target.value : v))}/></label>)}</div> : <label className="text-[13px] text-slate-700 block">Mã công thức nâng cao (tùy chọn)<input className="block w-full mt-1 p-2 border rounded-lg bg-white font-mono" value={latex} onChange={e => setLatex(e.target.value)} /></label>}
-      <button type="button" onClick={() => { setLatex(template.make(fields)); setAdvanced(v => !v); }} className="text-[12px] underline text-indigo-700">{advanced ? 'Chuyển về nhập theo mẫu' : 'Chỉnh sửa nâng cao'}</button>
-      <div className="min-h-10 p-2 rounded-lg bg-white border border-indigo-100 text-center text-lg">{valid ? <span dangerouslySetInnerHTML={{ __html: katex.renderToString(preview, { throwOnError: false }) }} /> : <span className="text-rose-600 text-sm">Biểu thức chưa hợp lệ</span>}</div>
-      <div className="flex gap-2"><button type="button" disabled={!valid} onClick={() => insert(preview)} className="bg-indigo-600 disabled:opacity-40 text-white px-4 py-2 rounded-lg text-sm font-bold">{editing ? 'Cập nhật công thức' : 'Chèn vào nội dung'}</button><button type="button" onClick={() => { setTemplate(null); setEditing(null); }} className="bg-white border px-4 py-2 rounded-lg text-sm">Hủy</button>{editing && <button type="button" onClick={() => { editing.remove(); emit(); setEditing(null); setTemplate(null); }} className="text-rose-600 border border-rose-200 px-3 py-2 rounded-lg text-sm">Xóa công thức</button>}</div>
+      {uneditable ? <div className="text-[13px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2">Công thức cũ có cấu trúc phức tạp. Để giữ nguyên công thức, hãy chọn mẫu mới trên thanh công cụ hoặc nhấn Hủy. Không cần nhập mã kỹ thuật.</div> : <div className="text-[12px] text-slate-600">Chạm vào từng ô để sửa trực tiếp. Không cần gõ lệnh công thức.</div>}
+      <div className="flex flex-wrap gap-1">{TEMPLATES.filter(t => t.fields.length).map(t => <button type="button" key={t.title} onClick={() => { setTemplate(t); setFields([...t.defaults]); setVisualKind(t.label === 'Phân số' ? 'fraction' : t.label === 'Căn' ? 'root' : 'template'); setUneditable(false); }} className="px-2 py-1 text-[12px] rounded border bg-white">{t.label}</button>)}</div>
+      {!uneditable && visualKind === 'fraction' ? <div className="rounded-lg bg-white p-3 border border-indigo-100 flex items-center justify-center gap-2 flex-wrap">
+        <input aria-label="Biểu thức trước phân số" placeholder="Trước phân số (ví dụ: y =)" className="w-24 min-w-0 p-2 border rounded text-center" value={fields[0] || ''} onChange={e => setFields(a => a.map((v,i) => i === 0 ? e.target.value : v))}/>
+        <div className="inline-flex flex-col items-stretch min-w-28 gap-1">
+          <input aria-label="Tử số" placeholder="Tử số" className="w-full p-2 border rounded text-center" value={fields[1] || ''} onChange={e => setFields(a => a.map((v,i) => i === 1 ? e.target.value : v))}/>
+          <div className="border-t-2 border-slate-800" />
+          <input aria-label="Mẫu số" placeholder="Mẫu số" className="w-full p-2 border rounded text-center" value={fields[2] || ''} onChange={e => setFields(a => a.map((v,i) => i === 2 ? e.target.value : v))}/>
+        </div>
+        <input aria-label="Biểu thức sau phân số" placeholder="Sau phân số" className="w-24 min-w-0 p-2 border rounded text-center" value={fields[3] || ''} onChange={e => setFields(a => a.map((v,i) => i === 3 ? e.target.value : v))}/>
+      </div> : !uneditable && visualKind === 'root' ? <div className="flex gap-2 items-center flex-wrap bg-white rounded-lg p-3">
+        {['Trước căn', 'Biểu thức dưới căn', 'Sau căn'].map((name,i) => <label key={name} className="text-xs flex-1 min-w-28">{name}<input className="block w-full p-2 border rounded mt-1" value={fields[i] || ''} onChange={e => setFields(a => a.map((v,j) => i === j ? e.target.value : v))}/></label>)}
+      </div> : !uneditable && <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">{(visualKind === 'plain' ? ['Biểu thức'] : template.fields).map((name, i) => <label key={i} className="text-[13px] text-slate-700">{name}<input className="block w-full mt-1 p-2 border rounded-lg bg-white" value={fields[i] || ''} onChange={e => setFields(old => old.map((v,j) => i === j ? e.target.value : v))}/></label>)}</div>}
+      <div className="min-h-10 p-2 rounded-lg bg-white border border-indigo-100 text-center text-lg">{valid && !uneditable ? <span dangerouslySetInnerHTML={{ __html: katex.renderToString(preview, { throwOnError: false }) }} /> : <span className="text-rose-600 text-sm">Biểu thức chưa hợp lệ</span>}</div>
+      <div className="flex gap-2"><button type="button" disabled={!valid || uneditable} onClick={() => insert(preview)} className="bg-indigo-600 disabled:opacity-40 text-white px-4 py-2 rounded-lg text-sm font-bold">{editing ? 'Cập nhật công thức' : 'Chèn vào nội dung'}</button><button type="button" onClick={() => { setTemplate(null); setEditing(null); }} className="bg-white border px-4 py-2 rounded-lg text-sm">Hủy</button>{editing && <button type="button" onClick={() => { editing.remove(); emit(); setEditing(null); setTemplate(null); }} className="text-rose-600 border border-rose-200 px-3 py-2 rounded-lg text-sm">Xóa công thức</button>}</div>
     </div>}
   </div>;
 }
