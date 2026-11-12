@@ -1,3 +1,4 @@
+import DrawingToolsPage from './components/drawing/DrawingToolsPage';
 import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import Sidebar, { SectionKey } from './components/Sidebar';
@@ -47,23 +48,8 @@ import {
 import { soundService } from './utils/audio';
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState<UserProfile>(() => {
-    try {
-      const savedUser = localStorage.getItem('edutest_smart_user');
-      if (savedUser) {
-        const parsed = JSON.parse(savedUser);
-        if (parsed.name && parsed.name.includes('Hồ Nguyễn Đa Thiện')) {
-          parsed.name = 'Thầy Hồ Nguyễn Đa Thiện';
-        }
-        return parsed;
-      }
-    } catch {}
-    const savedSchool = typeof window !== 'undefined' ? localStorage.getItem('edutest_school_name') : null;
-    if (savedSchool) {
-      return { ...INITIAL_TEACHER, school: savedSchool };
-    }
-    return INITIAL_TEACHER;
-  });
+  if (typeof window !== "undefined" && window.location.pathname === "/drawing-tools") return <DrawingToolsPage />;
+  const [currentUser, setCurrentUser] = useState<UserProfile>(INITIAL_TEACHER);
   const [currentSection, setCurrentSection] = useState<SectionKey>('overview');
   const [soundEnabled, setSoundEnabled] = useState<boolean>(soundService.isEnabled());
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
@@ -120,18 +106,6 @@ export default function App() {
       if (['classes', 'questions', 'matrix', 'exam-builder', 'exam-vault', 'proctoring'].includes(currentSection)) {
         setCurrentSection('overview');
       }
-    }
-  };
-
-  const handleUpdateUser = (updatedUser: UserProfile) => {
-    setCurrentUser(updatedUser);
-    try {
-      localStorage.setItem('edutest_smart_user', JSON.stringify(updatedUser));
-      if (updatedUser.school) {
-        localStorage.setItem('edutest_school_name', updatedUser.school);
-      }
-    } catch (e) {
-      console.warn('Cannot save user to localStorage', e);
     }
   };
 
@@ -216,47 +190,24 @@ export default function App() {
     setMatrices((prev) => prev.map((m) => (m.id === updatedMatrix.id ? updatedMatrix : m)));
   };
 
-  const [editingExam, setEditingExam] = useState<Exam | null>(null);
+  const handleSaveExam = (newExam: Omit<Exam, 'id' | 'createdAt'>) => {
+    const created: Exam = {
+      ...newExam,
+      id: `exam-${Date.now()}`,
+      createdAt: new Date().toISOString().slice(0, 10),
+    };
+    setExams((prev) => [created, ...prev]);
 
-  const handleSaveExam = (newExamData: Omit<Exam, 'id' | 'createdAt'>, existingId?: string) => {
-    if (existingId) {
-      setExams((prev) =>
-        prev.map((e) => (e.id === existingId ? { ...e, ...newExamData, updatedAt: new Date().toISOString() } : e))
-      );
-      const newAct: ActivityLog = {
-        id: `act-${Date.now()}`,
-        user: currentUser.name,
-        role: 'Giáo viên',
-        action: 'Cập nhật đề thi',
-        detail: `Đã chỉnh sửa và lưu phiên bản mới của "${newExamData.title}"`,
-        timeAgo: 'Vừa xong',
-        timestamp: new Date().toLocaleString('vi-VN'),
-      };
-      setActivities((prev) => [newAct, ...prev]);
-    } else {
-      const created: Exam = {
-        ...newExamData,
-        id: `exam-${Date.now()}`,
-        createdAt: new Date().toISOString().slice(0, 10),
-      };
-      setExams((prev) => [created, ...prev]);
-
-      const newAct: ActivityLog = {
-        id: `act-${Date.now()}`,
-        user: currentUser.name,
-        role: 'Giáo viên',
-        action: created.status === 'published' ? 'Phát hành đề thi' : 'Lưu bản nháp đề thi',
-        detail: `Đề: ${created.title} (${created.durationMinutes} phút)`,
-        timeAgo: 'Vừa xong',
-        timestamp: new Date().toLocaleString('vi-VN'),
-      };
-      setActivities((prev) => [newAct, ...prev]);
-    }
-    setEditingExam(null);
-  };
-
-  const handleUpdateExistingExam = (updatedExam: Exam) => {
-    setExams((prev) => prev.map((e) => (e.id === updatedExam.id ? updatedExam : e)));
+    const newAct: ActivityLog = {
+      id: `act-${Date.now()}`,
+      user: currentUser.name,
+      role: 'Giáo viên',
+      action: created.status === 'published' ? 'Phát hành đề thi' : 'Lưu bản nháp đề thi',
+      detail: `Đề: ${created.title} (${created.durationMinutes} phút)`,
+      timeAgo: 'Vừa xong',
+      timestamp: new Date().toLocaleString('vi-VN'),
+    };
+    setActivities((prev) => [newAct, ...prev]);
   };
 
   const handleSubmitExam = (submissionData: Omit<ExamSubmission, 'id'>) => {
@@ -379,14 +330,8 @@ export default function App() {
             <ExamBuilderView
               questions={questions}
               classes={classes}
-              currentUser={currentUser}
-              initialExam={editingExam}
-              onClearInitialExam={() => setEditingExam(null)}
               onSaveExam={handleSaveExam}
-              onNavigateToVault={() => {
-                setEditingExam(null);
-                setCurrentSection('exam-vault');
-              }}
+              onNavigateToVault={() => setCurrentSection('exam-vault')}
             />
           )}
 
@@ -394,12 +339,6 @@ export default function App() {
             <ExamVaultView
               exams={exams}
               classes={classes}
-              authorName={currentUser.name}
-              onEditExam={(exam) => {
-                setEditingExam(exam);
-                setCurrentSection('exam-builder');
-              }}
-              onUpdateExam={handleUpdateExistingExam}
               onNavigate={(sec) => setCurrentSection(sec)}
             />
           )}
@@ -457,7 +396,6 @@ export default function App() {
               soundEnabled={soundEnabled}
               onToggleSound={handleToggleSound}
               onResetData={handleResetData}
-              onUpdateUser={handleUpdateUser}
             />
           )}
 
